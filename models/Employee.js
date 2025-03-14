@@ -16,23 +16,47 @@ const employeeSchema = new mongoose.Schema(
       minLength: [2, "Last name should have at least 2 characters"],
       maxLength: [30, "Last name should not exceed 30 characters"],
     },
-    email: {
-      type: String,
-      required: [true, "Enter your email address"],
-      unique: true,
-      validate: [validator.isEmail, "Please enter a valid email address"],
-    },
     phoneNumber: {
       type: String,
       required: [true, "Enter the phone number"],
     },
+    avatar: {
+      public_id: {
+        type: String,
+        required: [true, "Avatar public_id is required"], // Required
+      },
+      url: {
+        type: String,
+        required: [true, "Avatar URL is required"], // Required
+      },
+    },
+    geo: {
+      type: Boolean,
+      required: [true, "Geo feature is required"], // Required
+      default: false,
+    },
+    realTime: {
+      type: Boolean,
+      required: [true, "Real-time feature is required"], // Required
+      default: false,
+    },
+    nfcQr: {
+      type: Boolean,
+      required: [true, "NFC/QR feature is required"], // Required
+      default: false,
+    },
+    forceQr: {
+      type: Boolean,
+      required: [true, "Force QR feature is required"], // Required
+      default: false,
+    },
     branch: {
       type: String,
-      required: [true, "Enter the branch"],
+      required: [false, "Enter the branch"], // Optional
     },
     shift: {
       type: String,
-      required: [true, "Enter the shift"],
+      required: [false, "Enter the shift"], // Optional
     },
     hourlyWages: {
       type: Number,
@@ -60,7 +84,7 @@ const employeeSchema = new mongoose.Schema(
     },
     salaryBased: {
       type: Boolean,
-      required: [true, "Specify if the employee is salary-based"],
+      required: [false, "Specify if the employee is salary-based"], // Optional
     },
     totalSalary: {
       type: Number,
@@ -88,35 +112,9 @@ const employeeSchema = new mongoose.Schema(
         return `EMP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`; // Generate a unique key
       },
     },
-    avatar: {
-      public_id: {
-        type: String,
-        required: [true, "Avatar public_id is required"],
-      },
-      url: {
-        type: String,
-        required: [true, "Avatar URL is required"],
-      },
-    },
     role: {
       type: String,
-      default: "user",
-    },
-    geo: {
-      type: Boolean,
-      default: false, // For geo location feature
-    },
-    realTime: {
-      type: Boolean,
-      default: false, // For real-time updates
-    },
-    nfcQr: {
-      type: Boolean,
-      default: false, // NFC or QR code related feature
-    },
-    forceQr: {
-      type: Boolean,
-      default: false, // For force QR feature
+      default: "user", // Optional
     },
     activationCode: {
       type: String,

@@ -31,32 +31,151 @@ const sendEmail = async (email, uniqueKey) => {
   }
 };
 
+// const addEmployeeController = async (req, res) => {
+//   try {
+//     const {
+//       firstName,
+//       lastName,
+//       email,
+//       phoneNumber,
+//       shift,
+//       branch,
+//       salaryBased,
+//       hourlyWages,
+//       salary,
+//       joiningDate,
+//       role,
+//       avatar,
+//       location,
+//       realTimeTracking,
+//       nfcQrEnabled,
+//       forceQrScan,
+//       overtime,
+//       totalHours,
+//     } = req.body;
+
+//     // Check if employee already exists
+//     const existingEmployee = await Employee.findOne({
+//       $or: [{ email }, { phoneNumber }],
+//     });
+
+//     if (existingEmployee) {
+//       return res.status(400).json({
+//         message: "Employee with this email or phone number already exists.",
+//         success: false,
+//       });
+//     }
+
+//     // Validate salary or hourly wages
+//     if (salaryBased && !salary) {
+//       return res.status(400).json({
+//         message: "Salary is required for salaried employees.",
+//         success: false,
+//       });
+//     }
+
+//     if (!salaryBased && !hourlyWages) {
+//       return res.status(400).json({
+//         message: "Hourly wages are required for hourly employees.",
+//         success: false,
+//       });
+//     }
+
+//     // Compute total salary (if applicable)
+//     let totalSalary = salaryBased
+//       ? salary
+//       : (hourlyWages || 0) * (totalHours || 0);
+//     if (overtime) {
+//       totalSalary += overtime;
+//     }
+
+//     // Create new employee instance
+//     const newEmployee = new Employee({
+//       firstName,
+//       lastName,
+//       email,
+//       phoneNumber,
+//       shift,
+//       branch,
+//       salaryBased,
+//       hourlyWages: hourlyWages || null,
+//       salary: salary || null,
+//       totalSalary,
+//       overtime: overtime || 0,
+//       totalHours: totalHours || 0,
+//       joiningDate,
+//       role: role || "user",
+//       avatar: avatar || { public_id: "", url: "" },
+//       location: location || { lat: null, lng: null },
+//       realTimeTracking: realTimeTracking || false,
+//       nfcQrEnabled: nfcQrEnabled || false,
+//       forceQrScan: forceQrScan || false,
+//     });
+
+//     // Save to database
+//     await newEmployee.save();
+
+//     // Ensure uniqueKey exists before sending email
+//     if (!newEmployee.uniqueKey) {
+//       console.error("Error: uniqueKey not generated.");
+//     } else {
+//       await sendEmail(email, newEmployee.uniqueKey);
+//     }
+
+//     // Return success response with all fields
+//     res.status(201).json({
+//       message: "Employee added successfully!",
+//       success: true,
+//       employee: {
+//         firstName,
+//         lastName,
+//         email,
+//         phoneNumber,
+//         uniqueKey: newEmployee.uniqueKey,
+//         shift,
+//         branch,
+//         salaryBased,
+//         hourlyWages: newEmployee.hourlyWages,
+//         salary: newEmployee.salary,
+//         totalSalary: newEmployee.totalSalary,
+//         overtime: newEmployee.overtime,
+//         totalHours: newEmployee.totalHours,
+//         joiningDate: newEmployee.joiningDate,
+//         role: newEmployee.role,
+//         avatar: newEmployee.avatar,
+//         location: newEmployee.location,
+//         realTimeTracking: newEmployee.realTimeTracking,
+//         nfcQrEnabled: newEmployee.nfcQrEnabled,
+//         forceQrScan: newEmployee.forceQrScan,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error adding employee:", error);
+//     res.status(500).json({
+//       message: "An error occurred while adding the employee.",
+//       success: false,
+//     });
+//   }
+// };
+// Import the Employee model
+
 const addEmployeeController = async (req, res) => {
   try {
     const {
       firstName,
       lastName,
       email,
-      phoneNumber,
-      shift,
-      branch,
-      salaryBased,
-      hourlyWages,
-      salary,
-      joiningDate,
-      role,
+      phone,
       avatar,
-      location,
-      realTimeTracking,
-      nfcQrEnabled,
-      forceQrScan,
-      overtime,
-      totalHours,
+      geo, // Changed from 'location' to 'geo' to match model
+      realTime,
+      nfcQr,
+      forceQr,
     } = req.body;
 
-    // Check if employee already exists
+    // Check if employee already exists based on email or phone number
     const existingEmployee = await Employee.findOne({
-      $or: [{ email }, { phoneNumber }],
+      $or: [{ email }, { phone }],
     });
 
     if (existingEmployee) {
@@ -66,87 +185,37 @@ const addEmployeeController = async (req, res) => {
       });
     }
 
-    // Validate salary or hourly wages
-    if (salaryBased && !salary) {
-      return res.status(400).json({
-        message: "Salary is required for salaried employees.",
-        success: false,
-      });
-    }
-
-    if (!salaryBased && !hourlyWages) {
-      return res.status(400).json({
-        message: "Hourly wages are required for hourly employees.",
-        success: false,
-      });
-    }
-
-    // Compute total salary (if applicable)
-    let totalSalary = salaryBased
-      ? salary
-      : (hourlyWages || 0) * (totalHours || 0);
-    if (overtime) {
-      totalSalary += overtime;
-    }
-
-    // Create new employee instance
+    // Create new employee instance using the Employee model
     const newEmployee = new Employee({
       firstName,
       lastName,
       email,
-      phoneNumber,
-      shift,
-      branch,
-      salaryBased,
-      hourlyWages: hourlyWages || null,
-      salary: salary || null,
-      totalSalary,
-      overtime: overtime || 0,
-      totalHours: totalHours || 0,
-      joiningDate,
-      role: role || "user",
-      avatar: avatar || { public_id: "", url: "" },
-      location: location || { lat: null, lng: null },
-      realTimeTracking: realTimeTracking || false,
-      nfcQrEnabled: nfcQrEnabled || false,
-      forceQrScan: forceQrScan || false,
+      phone,
+      avatar: avatar || null, // Default avatar to null
+      geo: geo || false, // Default geo to false
+      realTime: realTime || false, // Default realTime to false
+      nfcQr: nfcQr || false, // Default nfcQr to false
+      forceQr: forceQr || false, // Default forceQr to false
     });
 
-    // Save to database
+    // Save to the database
     await newEmployee.save();
-
-    // Ensure uniqueKey exists before sending email
-    if (!newEmployee.uniqueKey) {
-      console.error("Error: uniqueKey not generated.");
-    } else {
-      await sendEmail(email, newEmployee.uniqueKey);
-    }
 
     // Return success response with all fields
     res.status(201).json({
       message: "Employee added successfully!",
       success: true,
       employee: {
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        uniqueKey: newEmployee.uniqueKey,
-        shift,
-        branch,
-        salaryBased,
-        hourlyWages: newEmployee.hourlyWages,
-        salary: newEmployee.salary,
-        totalSalary: newEmployee.totalSalary,
-        overtime: newEmployee.overtime,
-        totalHours: newEmployee.totalHours,
-        joiningDate: newEmployee.joiningDate,
-        role: newEmployee.role,
+        firstName: newEmployee.firstName,
+        lastName: newEmployee.lastName,
+        email: newEmployee.email,
+        phone: newEmployee.phone,
         avatar: newEmployee.avatar,
-        location: newEmployee.location,
-        realTimeTracking: newEmployee.realTimeTracking,
-        nfcQrEnabled: newEmployee.nfcQrEnabled,
-        forceQrScan: newEmployee.forceQrScan,
+        geo: newEmployee.geo,
+        realTime: newEmployee.realTime,
+        nfcQr: newEmployee.nfcQr,
+        forceQr: newEmployee.forceQr,
+        code: newEmployee.code, // The generated unique activation code
       },
     });
   } catch (error) {

@@ -76,6 +76,7 @@ const MiddlewareForIfElse = require("./middleware/error");
 app.use(
   cors({
     origin: [
+      "http://65.0.199.177:9000",
       "http://localhost:3000",
       "http://10.96.42.40:3000",
       "http://localhost:5173",

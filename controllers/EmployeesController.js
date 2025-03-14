@@ -7,18 +7,6 @@ const cookieParser = require("cookie-parser");
 
 require("dotenv").config();
 const router = express.Router();
-
-// Utility function to generate a 5-character alphanumeric unique key
-const generateUniqueKey = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let uniqueKey = "";
-  for (let i = 0; i < 5; i++) {
-    uniqueKey += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `EMP-${uniqueKey}`;
-};
-
-// Function to send email with employee details
 const sendEmail = async (email, uniqueKey) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -32,7 +20,7 @@ const sendEmail = async (email, uniqueKey) => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: "Welcome to the Location Tracking App",
-    text: `Welcome to our app! Your unique key is ${uniqueKey}. Please use this key to login to the location tracking app: http://yourapp.com/login`,
+    text: `Welcome to our app! Your unique key is ${uniqueKey}. Please use this key to log in: http://yourapp.com/login`,
   };
 
   try {
@@ -43,10 +31,8 @@ const sendEmail = async (email, uniqueKey) => {
   }
 };
 
-// Controller for adding an employee (wrapped in try-catch)
 const addEmployeeController = async (req, res) => {
   try {
-    // Destructure employee data from the request body
     const {
       firstName,
       lastName,
@@ -57,22 +43,30 @@ const addEmployeeController = async (req, res) => {
       salaryBased,
       hourlyWages,
       salary,
+      joiningDate,
+      role,
+      avatar,
+      location,
+      realTimeTracking,
+      nfcQrEnabled,
+      forceQrScan,
+      overtime,
+      totalHours,
     } = req.body;
 
-    // Check if employee already exists by email or phone number
+    // Check if employee already exists
     const existingEmployee = await Employee.findOne({
-      $or: [{ email: email }, { phoneNumber: phoneNumber }],
+      $or: [{ email }, { phoneNumber }],
     });
 
     if (existingEmployee) {
       return res.status(400).json({
-        message:
-          "Employee with this email or phone number is already registered.",
+        message: "Employee with this email or phone number already exists.",
         success: false,
       });
     }
 
-    // Validate salary or hourly wages based on salaryBased flag
+    // Validate salary or hourly wages
     if (salaryBased && !salary) {
       return res.status(400).json({
         message: "Salary is required for salaried employees.",
@@ -87,10 +81,15 @@ const addEmployeeController = async (req, res) => {
       });
     }
 
-    // Generate a unique key for the employee
-    const uniqueKey = generateUniqueKey();
+    // Compute total salary (if applicable)
+    let totalSalary = salaryBased
+      ? salary
+      : (hourlyWages || 0) * (totalHours || 0);
+    if (overtime) {
+      totalSalary += overtime;
+    }
 
-    // Create a new employee record
+    // Create new employee instance
     const newEmployee = new Employee({
       firstName,
       lastName,
@@ -99,19 +98,31 @@ const addEmployeeController = async (req, res) => {
       shift,
       branch,
       salaryBased,
-      hourlyWages,
-      salary,
-      totalSalary: salaryBased ? salary : hourlyWages * 160, // Assuming 160 working hours in a month
-      uniqueKey,
+      hourlyWages: hourlyWages || null,
+      salary: salary || null,
+      totalSalary,
+      overtime: overtime || 0,
+      totalHours: totalHours || 0,
+      joiningDate,
+      role: role || "user",
+      avatar: avatar || { public_id: "", url: "" },
+      location: location || { lat: null, lng: null },
+      realTimeTracking: realTimeTracking || false,
+      nfcQrEnabled: nfcQrEnabled || false,
+      forceQrScan: forceQrScan || false,
     });
 
-    // Save new employee to the database
+    // Save to database
     await newEmployee.save();
 
-    // Send welcome email with the unique key
-    await sendEmail(email, uniqueKey);
+    // Ensure uniqueKey exists before sending email
+    if (!newEmployee.uniqueKey) {
+      console.error("Error: uniqueKey not generated.");
+    } else {
+      await sendEmail(email, newEmployee.uniqueKey);
+    }
 
-    // Return success response with employee details
+    // Return success response with all fields
     res.status(201).json({
       message: "Employee added successfully!",
       success: true,
@@ -120,13 +131,22 @@ const addEmployeeController = async (req, res) => {
         lastName,
         email,
         phoneNumber,
-        uniqueKey,
+        uniqueKey: newEmployee.uniqueKey,
         shift,
         branch,
         salaryBased,
-        hourlyWages,
-        salary,
+        hourlyWages: newEmployee.hourlyWages,
+        salary: newEmployee.salary,
         totalSalary: newEmployee.totalSalary,
+        overtime: newEmployee.overtime,
+        totalHours: newEmployee.totalHours,
+        joiningDate: newEmployee.joiningDate,
+        role: newEmployee.role,
+        avatar: newEmployee.avatar,
+        location: newEmployee.location,
+        realTimeTracking: newEmployee.realTimeTracking,
+        nfcQrEnabled: newEmployee.nfcQrEnabled,
+        forceQrScan: newEmployee.forceQrScan,
       },
     });
   } catch (error) {
@@ -138,149 +158,6 @@ const addEmployeeController = async (req, res) => {
   }
 };
 
-// Controller for employee login based on uniqueKey
-// Login Controller with JWT
-// const employeeLoginController = async (req, res) => {
-//   try {
-//     // Destructure the uniqueKey from the request body
-//     const { uniqueKey } = req.body;
-
-//     // Validate if uniqueKey is provided
-//     if (!uniqueKey) {
-//       return res.status(400).json({
-//         message: 'Unique Key is required',
-//         success: false,
-//       });
-//     }
-
-//     // Find the employee by unique key
-//     const employee = await Employee.findOne({ uniqueKey });
-
-//     // Check if employee is found
-//     if (!employee) {
-//       return res.status(404).json({
-//         message: 'Employee not found with this unique key',
-//         success: false,
-//       });
-//     }
-
-//     // Create a JWT token
-//     const token = jwt.sign({ uniqueKey: employee.uniqueKey }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-//     // Set the token in the cookies
-//     res.cookie('authToken', token, {
-//       httpOnly: true, // Ensures the cookie is only accessible by the server
-//       secure: process.env.NODE_ENV === 'production', // Ensure this is secure in production (use HTTPS)
-//       maxAge: 3600000, // 1 hour
-//     });
-
-//     // Respond with employee details and success
-//     res.status(200).json({
-//       message: 'Login successful',
-//       success: true,
-//       employee: {
-//         firstName: employee.firstName,
-//         lastName: employee.lastName,
-//         email: employee.email,
-//         phoneNumber: employee.phoneNumber,
-//         branch: employee.branch,
-//         shift: employee.shift,
-//         hourlyWages: employee.hourlyWages,
-//         salary: employee.salary,
-//         salaryBased: employee.salaryBased,
-//         totalSalary: employee.totalSalary,
-//         role: employee.role,
-//         uniqueKey: employee.uniqueKey,
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error logging in employee:', error);
-//     res.status(500).json({
-//       message: 'An error occurred during login',
-//       success: false,
-//     });
-//   }
-// };
-
-// const employeeLoginController = async (req, res) => {
-//   try {
-//     const { uniqueKey } = req.body;
-
-//     // Validate if uniqueKey is provided
-//     if (!uniqueKey) {
-//       return res.status(400).json({
-//         message: 'Unique Key is required',
-//         success: false,
-//       });
-//     }
-
-//     // Find the employee by unique key
-//     const employee = await Employee.findOne({ uniqueKey });
-
-//     if (!employee) {
-//       return res.status(404).json({
-//         message: 'Employee not found with this unique key',
-//         success: false,
-//       });
-//     }
-
-//     // Save login activity with full employee details
-//     const loginActivity = new LoginActivity({
-//       uniqueKey: employee.uniqueKey,
-//       employeeDetails: {
-//         firstName: employee.firstName,
-//         lastName: employee.lastName,
-//         email: employee.email,
-//         phoneNumber: employee.phoneNumber,
-//         branch: employee.branch,
-//         shift: employee.shift,
-//         hourlyWages: employee.hourlyWages,
-//         salary: employee.salary,
-//         salaryBased: employee.salaryBased,
-//         totalSalary: employee.totalSalary,
-//         role: employee.role,
-//       },
-//     });
-
-//     await loginActivity.save(); // Save login activity to database
-
-//     // Create a JWT token
-//     const token = jwt.sign({ uniqueKey: employee.uniqueKey }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-//     // Set the token in the cookies
-//     res.cookie('authToken', token, {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === 'production',
-//       maxAge: 3600000, // 1 hour
-//     });
-
-//     // Respond with employee details
-//     res.status(200).json({
-//       message: 'Login successful',
-//       success: true,
-//       employee: {
-//         firstName: employee.firstName,
-//         lastName: employee.lastName,
-//         email: employee.email,
-//         phoneNumber: employee.phoneNumber,
-//         branch: employee.branch,
-//         shift: employee.shift,
-//         hourlyWages: employee.hourlyWages,
-//         salary: employee.salary,
-//         salaryBased: employee.salaryBased,
-//         totalSalary: employee.totalSalary,
-//         role: employee.role,
-//         uniqueKey: employee.uniqueKey,
-//       },
-//     });
-//   } catch (error) {
-//     console.error('Error logging in employee:', error);
-//     res.status(500).json({
-//       message: 'An error occurred during login',
-//       success: false,
-//     });
-//   }
-// };
 const employeeLoginController = async (req, res) => {
   try {
     const { uniqueKey } = req.body;

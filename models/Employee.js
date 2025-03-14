@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const { v4: uuidv4 } = require("uuid");
 
 // Define the employee schema
 const employeeSchema = new mongoose.Schema(
@@ -26,31 +25,19 @@ const employeeSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       required: [true, "Enter the phone number"],
-      validate: {
-        validator: function (value) {
-          return validator.isMobilePhone(value, "any", { strictMode: false });
-        },
-        message: "Enter a valid phone number",
-      },
     },
     branch: {
       type: String,
       required: [true, "Enter the branch"],
-      enum: ["New York", "Los Angeles", "Chicago", "Houston", "Miami"],
     },
     shift: {
       type: String,
       required: [true, "Enter the shift"],
-      enum: ["Morning", "Evening", "Night"],
-    },
-    salaryBased: {
-      type: Boolean,
-      required: [true, "Specify if the employee is salary-based"],
     },
     hourlyWages: {
       type: Number,
       required: function () {
-        return !this.salaryBased;
+        return this.salaryBased === false;
       },
       validate: {
         validator: function (value) {
@@ -62,7 +49,7 @@ const employeeSchema = new mongoose.Schema(
     salary: {
       type: Number,
       required: function () {
-        return this.salaryBased;
+        return this.salaryBased === true;
       },
       validate: {
         validator: function (value) {
@@ -70,6 +57,10 @@ const employeeSchema = new mongoose.Schema(
         },
         message: "Salary should be greater than 0 when salary-based",
       },
+    },
+    salaryBased: {
+      type: Boolean,
+      required: [true, "Specify if the employee is salary-based"],
     },
     totalSalary: {
       type: Number,
@@ -87,70 +78,64 @@ const employeeSchema = new mongoose.Schema(
     },
     totalHours: {
       type: Number,
-      default: 0,
-    },
-    joiningDate: {
-      type: Date,
-      required: [true, "Enter the joining date"],
+      default: 0, // Total hours worked, applicable to all employees
     },
     uniqueKey: {
       type: String,
       unique: true,
       required: true,
       default: function () {
-        return `EMP-${uuidv4().toUpperCase()}`;
+        return `EMP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`; // Generate a unique key
       },
     },
     avatar: {
       public_id: {
         type: String,
+        required: [true, "Avatar public_id is required"],
       },
       url: {
         type: String,
-        validate: [validator.isURL, "Enter a valid URL"],
+        required: [true, "Avatar URL is required"],
       },
     },
     role: {
       type: String,
-      enum: ["user", "admin", "manager"],
       default: "user",
     },
-
-    /** GEO-LOCATION (Latitude & Longitude) **/
-    location: {
-      type: {
-        lat: { type: Number, required: false },
-        lng: { type: Number, required: false },
+    geo: {
+      type: Boolean,
+      default: false, // For geo location feature
+    },
+    realTime: {
+      type: Boolean,
+      default: false, // For real-time updates
+    },
+    nfcQr: {
+      type: Boolean,
+      default: false, // NFC or QR code related feature
+    },
+    forceQr: {
+      type: Boolean,
+      default: false, // For force QR feature
+    },
+    activationCode: {
+      type: String,
+      required: true,
+      default: function () {
+        return `ACT-${Math.floor(1000 + Math.random() * 9000)}`; // Generate an activation code
       },
-      default: null,
-    },
-
-    /** REAL-TIME TRACKING **/
-    realTimeTracking: {
-      type: Boolean,
-      default: false,
-    },
-
-    /** NFC/QR SCANNING **/
-    nfcQrEnabled: {
-      type: Boolean,
-      default: false,
-    },
-
-    /** FORCE QR SCAN **/
-    forceQrScan: {
-      type: Boolean,
-      default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true } // Automatically adds createdAt and updatedAt fields
 );
 
 // Middleware for calculating totalSalary
 employeeSchema.pre("save", function (next) {
   if (this.salaryBased) {
-    this.totalSalary = this.salary + this.overtime * (this.salary / 160) * 1.5;
+    // If salary-based, calculate total salary including overtime
+    this.totalSalary = this.salary + this.overtime * (this.salary / 160) * 1.5; // Assuming 160 hours/month
   } else {
+    // If hourly-based, calculate total salary using hourly wages and total hours
     this.totalSalary = this.hourlyWages * this.totalHours;
   }
   next();

@@ -101,6 +101,14 @@ app.use("/api/v1/shift", shiftRoutes);
 app.use("/api/v1/branches", branchRoutes);
 app.use("/api/v1/reports", ReportRoutes);
 
+// Root Route
+app.get("/", (req, res) => {
+  res.send("Welcome to the API!");
+});
+
+
+
+
 // Error Handling Middleware
 app.use(MiddlewareForIfElse);
 

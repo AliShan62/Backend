@@ -37,22 +37,18 @@ const employeeSchema = new mongoose.Schema(
     geo: {
       type: Boolean,
       required: true,
-      default: false,
     },
     realTime: {
       type: Boolean,
       required: true,
-      default: false,
     },
     nfcQr: {
       type: Boolean,
       required: true,
-      default: false,
     },
     forceQr: {
       type: Boolean,
       required: true,
-      default: false,
     },
     branch: {
       type: String,

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const { v4: uuidv4 } = require("uuid");
 
-// Define the employee schema
 const employeeSchema = new mongoose.Schema(
   {
     firstName: {
@@ -29,35 +29,18 @@ const employeeSchema = new mongoose.Schema(
         type: String,
         required: [true, "Avatar public_id is required"],
       },
-      url: {
-        type: String,
-        required: [true, "Avatar URL is required"],
-      },
+      url: { type: String, required: [true, "Avatar URL is required"] },
     },
-    geo: {
-      type: Boolean,
-      required: true,
+    location: {
+      lat: { type: Number, required: false, default: null },
+      lng: { type: Number, required: false, default: null },
     },
-    realTime: {
-      type: Boolean,
-      required: true,
-    },
-    nfcQr: {
-      type: Boolean,
-      required: true,
-    },
-    forceQr: {
-      type: Boolean,
-      required: true,
-    },
-    branch: {
-      type: String,
-      trim: true,
-    },
-    shift: {
-      type: String,
-      trim: true,
-    },
+    geo: { type: Boolean, required: true },
+    realTime: { type: Boolean, required: true },
+    nfcQr: { type: Boolean, required: true },
+    forceQr: { type: Boolean, required: true },
+    branch: { type: String, trim: true },
+    shift: { type: String, trim: true },
     hourlyWages: {
       type: Number,
       required: function () {
@@ -72,14 +55,8 @@ const employeeSchema = new mongoose.Schema(
       },
       min: [0, "Salary must be greater than 0 when salary-based"],
     },
-    salaryBased: {
-      type: Boolean,
-      default: false,
-    },
-    totalSalary: {
-      type: Number,
-      default: 0,
-    },
+    salaryBased: { type: Boolean, default: false },
+    totalSalary: { type: Number, default: 0 },
     overtime: {
       type: Number,
       default: 0,
@@ -95,19 +72,8 @@ const employeeSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Total hours cannot be negative"],
     },
-    uniqueKey: {
-      type: String,
-      unique: true,
-      required: true,
-      default: function () {
-        return Math.random().toString(36).substr(2, 5).toUpperCase(); // Generates exactly 5 characters
-      },
-    },
-    role: {
-      type: String,
-      default: "user",
-      enum: ["user", "admin", "manager"],
-    },
+    uniqueKey: { type: String, unique: true, required: true, default: uuidv4 },
+    role: { type: String, default: "user", enum: ["user", "admin", "manager"] },
   },
   { timestamps: true }
 );
@@ -115,13 +81,13 @@ const employeeSchema = new mongoose.Schema(
 // Middleware for calculating totalSalary
 employeeSchema.pre("save", function (next) {
   if (this.salaryBased) {
-    if (this.salary && this.overtime >= 0) {
+    if (this.salary && (this.overtime || 0) >= 0) {
       this.totalSalary =
-        this.salary + this.overtime * (this.salary / 160) * 1.5;
+        this.salary + (this.overtime || 0) * (this.salary / 160) * 1.5;
     }
   } else {
-    if (this.hourlyWages && this.totalHours >= 0) {
-      this.totalSalary = this.hourlyWages * this.totalHours;
+    if (this.hourlyWages && (this.totalHours || 0) >= 0) {
+      this.totalSalary = this.hourlyWages * (this.totalHours || 0);
     }
   }
   next();
@@ -129,5 +95,4 @@ employeeSchema.pre("save", function (next) {
 
 // Create the Employee model
 const Employee = mongoose.model("Employee", employeeSchema);
-
 module.exports = Employee;

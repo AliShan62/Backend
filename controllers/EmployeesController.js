@@ -32,7 +32,6 @@ const sendEmail = async (email, uniqueKey) => {
   }
 };
 
-// Add Employee Controller
 const addEmployeeController = async (req, res) => {
   try {
     const {
@@ -49,9 +48,10 @@ const addEmployeeController = async (req, res) => {
       role,
       avatar,
       location,
-      realTimeTracking,
-      nfcQrEnabled,
-      forceQrScan,
+      geo,
+      realTime,
+      nfcQr,
+      forceQr,
       overtime,
       totalHours,
     } = req.body;
@@ -101,7 +101,7 @@ const addEmployeeController = async (req, res) => {
       firstName,
       lastName,
       email,
-      phoneNumber, // ✅ Now properly saved
+      phoneNumber,
       shift,
       branch,
       salaryBased,
@@ -113,10 +113,11 @@ const addEmployeeController = async (req, res) => {
       joiningDate,
       role: role || "user",
       avatar: avatar || { public_id: "", url: "" },
-      location: location || { lat: null, lng: null },
-      realTimeTracking: realTimeTracking || false,
-      nfcQrEnabled: nfcQrEnabled || false,
-      forceQrScan: forceQrScan || false,
+      location: location && location.lat && location.lng ? location : null, // Ensure lat, lng exist
+      geo,
+      realTime,
+      nfcQr,
+      forceQr,
     });
 
     // Save to database
@@ -125,7 +126,7 @@ const addEmployeeController = async (req, res) => {
     // Ensure uniqueKey exists before sending email
     if (!newEmployee.uniqueKey || newEmployee.uniqueKey.length !== 5) {
       console.error(
-        " Error: uniqueKey not generated properly. Value:",
+        "❌ Error: uniqueKey not generated properly. Value:",
         newEmployee.uniqueKey
       );
     } else {
@@ -134,13 +135,13 @@ const addEmployeeController = async (req, res) => {
 
     // Return success response
     res.status(201).json({
-      message: " Employee added successfully!",
+      message: "✅ Employee added successfully!",
       success: true,
       employee: {
         firstName,
         lastName,
         email,
-        phoneNumber, //  Now included in response
+        phoneNumber,
         uniqueKey: newEmployee.uniqueKey,
         shift,
         branch,
@@ -154,15 +155,16 @@ const addEmployeeController = async (req, res) => {
         role: newEmployee.role,
         avatar: newEmployee.avatar,
         location: newEmployee.location,
-        realTimeTracking: newEmployee.realTimeTracking,
-        nfcQrEnabled: newEmployee.nfcQrEnabled,
-        forceQrScan: newEmployee.forceQrScan,
+        geo: newEmployee.geo,
+        realTime: newEmployee.realTime,
+        nfcQr: newEmployee.nfcQr,
+        forceQr: newEmployee.forceQr,
       },
     });
   } catch (error) {
-    console.error(" Error adding employee:", error);
+    console.error("❌ Error adding employee:", error);
     res.status(500).json({
-      message: " An error occurred while adding the employee.",
+      message: "❌ An error occurred while adding the employee.",
       success: false,
     });
   }

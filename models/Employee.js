@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
-const { v4: uuidv4 } = require("uuid");
+
+function generateUniqueKey() {
+  return `EMP-${Math.floor(100 + Math.random() * 900)}`; // EMP-XXX
+}
 
 const employeeSchema = new mongoose.Schema(
   {
@@ -22,7 +24,7 @@ const employeeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      validate: [validator.isEmail, "Please enter a valid email address"],
+      validate: [require("validator").isEmail, "Please enter a valid email"],
     },
     avatar: {
       public_id: {
@@ -32,8 +34,8 @@ const employeeSchema = new mongoose.Schema(
       url: { type: String, required: [true, "Avatar URL is required"] },
     },
     location: {
-      lat: { type: Number, required: false, default: null },
-      lng: { type: Number, required: false, default: null },
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
     },
     geo: { type: Boolean, required: true },
     realTime: { type: Boolean, required: true },
@@ -72,22 +74,28 @@ const employeeSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Total hours cannot be negative"],
     },
-    uniqueKey: { type: String, unique: true, required: true, default: uuidv4 },
+    uniqueKey: {
+      type: String,
+      unique: true,
+      required: true,
+      default: generateUniqueKey,
+    },
     role: { type: String, default: "user", enum: ["user", "admin", "manager"] },
   },
   { timestamps: true }
 );
 
-// Middleware for calculating totalSalary
-employeeSchema.pre("save", function (next) {
-  if (this.salaryBased) {
-    if (this.salary && (this.overtime || 0) >= 0) {
-      this.totalSalary =
-        this.salary + (this.overtime || 0) * (this.salary / 160) * 1.5;
-    }
-  } else {
-    if (this.hourlyWages && (this.totalHours || 0) >= 0) {
-      this.totalSalary = this.hourlyWages * (this.totalHours || 0);
+// Middleware to ensure uniqueKey is unique
+employeeSchema.pre("save", async function (next) {
+  let isUnique = false;
+  while (!isUnique) {
+    const newKey = generateUniqueKey();
+    const existingEmployee = await mongoose
+      .model("Employee")
+      .findOne({ uniqueKey: newKey });
+    if (!existingEmployee) {
+      this.uniqueKey = newKey;
+      isUnique = true;
     }
   }
   next();

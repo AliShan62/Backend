@@ -127,7 +127,8 @@ const addEmployeeController = async (req, res) => {
   } catch (error) {
     console.error("❌ Error adding employee:", error);
     res.status(500).json({
-      message: "❌ An error occurred while adding the employee.",
+      // message: "❌ An error occurred while adding the employee.",
+      message: error,
       success: false,
     });
   }

@@ -32,6 +32,7 @@ const sendEmail = async (email, uniqueKey) => {
   }
 };
 
+// Controller to Add Employee
 const addEmployeeController = async (req, res) => {
   try {
     const {
@@ -51,16 +52,25 @@ const addEmployeeController = async (req, res) => {
       forceQr,
     } = req.body;
 
-    // Check if employee already exists by email or phone number
-    const existingEmployee = await Employee.findOne({
-      $or: [{ email }, { phoneNumber }],
-    });
+    // Check if employee already exists by email
+    const existingEmployee = await Employee.findOne({ email });
 
     if (existingEmployee) {
       return res.status(400).json({
-        message: "❌ Employee with this email or phone number already exists.",
+        message: "❌ Employee with this email already exists.",
         success: false,
       });
+    }
+
+    // If phoneNumber is provided, ensure it's unique
+    if (phoneNumber) {
+      const existingPhone = await Employee.findOne({ phoneNumber });
+      if (existingPhone) {
+        return res.status(400).json({
+          message: "❌ Employee with this phone number already exists.",
+          success: false,
+        });
+      }
     }
 
     // Create new employee instance
@@ -68,13 +78,13 @@ const addEmployeeController = async (req, res) => {
       firstName,
       lastName,
       email,
-      phoneNumber,
+      phoneNumber: phoneNumber || null, // Optional phone number
       shift,
       branch,
-      joiningDate,
+      joiningDate: joiningDate || Date.now(),
       role: role || "user",
       avatar: avatar || { public_id: "", url: "" },
-      location: location && location.lat && location.lng ? location : null, // Ensure lat, lng exist
+      location: location && location.lat && location.lng ? location : null,
       geo,
       realTime,
       nfcQr,
@@ -85,7 +95,7 @@ const addEmployeeController = async (req, res) => {
     await newEmployee.save();
 
     // Ensure uniqueKey exists before sending email
-    if (!newEmployee.uniqueKey || newEmployee.uniqueKey.length !== 5) {
+    if (!newEmployee.uniqueKey) {
       console.error(
         "❌ Error: uniqueKey not generated properly. Value:",
         newEmployee.uniqueKey
@@ -102,7 +112,7 @@ const addEmployeeController = async (req, res) => {
         firstName,
         lastName,
         email,
-        phoneNumber,
+        phoneNumber: newEmployee.phoneNumber,
         uniqueKey: newEmployee.uniqueKey,
         shift,
         branch,
@@ -117,9 +127,9 @@ const addEmployeeController = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(" Error adding employee:", error);
+    console.error("❌ Error adding employee:", error);
     res.status(500).json({
-      message: " An error occurred while adding the employee.",
+      message: "❌ An error occurred while adding the employee.",
       success: false,
     });
   }

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 function generateUniqueKey() {
   return `EMP-${Math.floor(100 + Math.random() * 900)}`; // EMP-XXX
@@ -24,7 +25,13 @@ const employeeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      validate: [require("validator").isEmail, "Please enter a valid email"],
+      validate: [validator.isEmail, "Please enter a valid email"],
+    },
+    phoneNumber: {
+      type: String,
+      unique: true,
+      sparse: true, // Makes it optional while maintaining uniqueness
+      trim: true,
     },
     avatar: {
       public_id: {
@@ -43,6 +50,7 @@ const employeeSchema = new mongoose.Schema(
     forceQr: { type: Boolean, required: true },
     branch: { type: String, trim: true },
     shift: { type: String, trim: true },
+    joiningDate: { type: Date, default: Date.now },
     totalHours: {
       type: Number,
       default: 0,
@@ -61,16 +69,17 @@ const employeeSchema = new mongoose.Schema(
 
 // Middleware to ensure uniqueKey is unique
 employeeSchema.pre("save", async function (next) {
-  let isUnique = false;
-  while (!isUnique) {
-    const newKey = generateUniqueKey();
-    const existingEmployee = await mongoose
-      .model("Employee")
-      .findOne({ uniqueKey: newKey });
-    if (!existingEmployee) {
-      this.uniqueKey = newKey;
-      isUnique = true;
-    }
+  if (!this.uniqueKey) {
+    let newKey;
+    let existingEmployee;
+    do {
+      newKey = generateUniqueKey();
+      existingEmployee = await mongoose
+        .model("Employee")
+        .findOne({ uniqueKey: newKey });
+    } while (existingEmployee);
+
+    this.uniqueKey = newKey;
   }
   next();
 });

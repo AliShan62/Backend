@@ -9,13 +9,10 @@ const dotenv = require("dotenv");
 
 dotenv.config(); // Load environment variables
 
-// Function to generate a unique key
-const generateUniqueKey = () => {
-  return Math.random().toString(36).substr(2, 10); // Example: "a1b2c3d4e5"
-};
+dotenv.config(); // Load environment variables
 
 // Send Email Function
-const sendEmail = async (email, uniqueKey) => {
+const sendEmail = async (email) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -29,7 +26,7 @@ const sendEmail = async (email, uniqueKey) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Welcome to the Location Tracking App",
-      text: `Welcome to our app! Your unique key is. Please use this key to log in: http://yourapp.com/login`,
+      text: `Welcome to our app! Please log in to get started: http://yourapp.com/login`,
     };
 
     await transporter.sendMail(message);
@@ -82,9 +79,6 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
-    // Generate a unique key
-    const uniqueKey = generateUniqueKey();
-
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,
@@ -101,14 +95,13 @@ const addEmployeeController = async (req, res) => {
       realTime,
       nfcQr,
       forceQr,
-      // uniqueKey, // Assign generated uniqueKey
     });
 
     // Save to database
     await newEmployee.save();
 
-    // Send email with the unique key
-    await sendEmail(email, uniqueKey);
+    // Send welcome email
+    await sendEmail(email);
 
     // Return success response
     res.status(201).json({
@@ -119,7 +112,6 @@ const addEmployeeController = async (req, res) => {
         lastName,
         email,
         phoneNumber: newEmployee.phoneNumber,
-        // uniqueKey,
         shift,
         branch,
         joiningDate: newEmployee.joiningDate,

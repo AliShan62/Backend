@@ -105,7 +105,7 @@ const addEmployeeController = async (req, res) => {
       shift,
       branch,
       salaryBased,
-      hourlyWages: hourlyWages || null,
+      // hourlyWages: hourlyWages || null,
       salary: salary || null,
       totalSalary,
       overtime: overtime || 0,
@@ -146,7 +146,7 @@ const addEmployeeController = async (req, res) => {
         shift,
         branch,
         salaryBased,
-        hourlyWages: newEmployee.hourlyWages,
+        // hourlyWages: newEmployee.hourlyWages,
         salary: newEmployee.salary,
         totalSalary: newEmployee.totalSalary,
         overtime: newEmployee.overtime,
@@ -162,9 +162,9 @@ const addEmployeeController = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Error adding employee:", error);
+    console.error(" Error adding employee:", error);
     res.status(500).json({
-      message: "❌ An error occurred while adding the employee.",
+      message: " An error occurred while adding the employee.",
       success: false,
     });
   }

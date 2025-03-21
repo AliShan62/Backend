@@ -43,13 +43,13 @@ const employeeSchema = new mongoose.Schema(
     forceQr: { type: Boolean, required: true },
     branch: { type: String, trim: true },
     shift: { type: String, trim: true },
-    hourlyWages: {
-      type: Number,
-      required: function () {
-        return !this.salaryBased;
-      },
-      min: [0, "Hourly wages must be greater than 0 when not salary-based"],
-    },
+    // hourlyWages: {
+    //   type: Number,
+    //   required: function () {
+    //     return !this.salaryBased;
+    //   },
+    //   min: [0, "Hourly wages must be greater than 0 when not salary-based"],
+    // },
     salary: {
       type: Number,
       required: function () {

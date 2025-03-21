@@ -4,9 +4,16 @@ const LoginActivity = require("../models/LoginActivity");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-
-require("dotenv").config();
 const router = express.Router();
+const dotenv = require("dotenv");
+
+dotenv.config(); // Load environment variables
+
+// Function to generate a unique key
+const generateUniqueKey = () => {
+  return Math.random().toString(36).substr(2, 10); // Example: "a1b2c3d4e5"
+};
+
 // Send Email Function
 const sendEmail = async (email, uniqueKey) => {
   try {
@@ -53,6 +60,7 @@ const addEmployeeController = async (req, res) => {
     } = req.body;
 
     console.log(req.body);
+
     // Check if employee already exists by email
     const existingEmployee = await Employee.findOne({ email });
 
@@ -74,6 +82,9 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
+    // Generate a unique key
+    const uniqueKey = generateUniqueKey();
+
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,
@@ -90,20 +101,14 @@ const addEmployeeController = async (req, res) => {
       realTime,
       nfcQr,
       forceQr,
+      uniqueKey, // Assign generated uniqueKey
     });
 
     // Save to database
     await newEmployee.save();
 
-    // Ensure uniqueKey exists before sending email
-    if (!newEmployee.uniqueKey) {
-      console.error(
-        "❌ Error: uniqueKey not generated properly. Value:",
-        newEmployee.uniqueKey
-      );
-    } else {
-      await sendEmail(email, newEmployee.uniqueKey);
-    }
+    // Send email with the unique key
+    await sendEmail(email, uniqueKey);
 
     // Return success response
     res.status(201).json({
@@ -114,7 +119,7 @@ const addEmployeeController = async (req, res) => {
         lastName,
         email,
         phoneNumber: newEmployee.phoneNumber,
-        uniqueKey: newEmployee.uniqueKey,
+        uniqueKey,
         shift,
         branch,
         joiningDate: newEmployee.joiningDate,

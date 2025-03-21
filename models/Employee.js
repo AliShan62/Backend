@@ -43,32 +43,6 @@ const employeeSchema = new mongoose.Schema(
     forceQr: { type: Boolean, required: true },
     branch: { type: String, trim: true },
     shift: { type: String, trim: true },
-    // hourlyWages: {
-    //   type: Number,
-    //   required: function () {
-    //     return !this.salaryBased;
-    //   },
-    //   min: [0, "Hourly wages must be greater than 0 when not salary-based"],
-    // },
-    salary: {
-      type: Number,
-      required: function () {
-        return this.salaryBased;
-      },
-      min: [0, "Salary must be greater than 0 when salary-based"],
-    },
-    salaryBased: { type: Boolean, default: false },
-    totalSalary: { type: Number, default: 0 },
-    overtime: {
-      type: Number,
-      default: 0,
-      validate: {
-        validator: function (value) {
-          return this.salaryBased ? value >= 0 : value === 0;
-        },
-        message: "Overtime is only applicable for salary-based employees.",
-      },
-    },
     totalHours: {
       type: Number,
       default: 0,

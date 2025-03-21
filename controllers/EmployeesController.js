@@ -41,9 +41,6 @@ const addEmployeeController = async (req, res) => {
       phoneNumber,
       shift,
       branch,
-      salaryBased,
-      hourlyWages,
-      salary,
       joiningDate,
       role,
       avatar,
@@ -52,8 +49,6 @@ const addEmployeeController = async (req, res) => {
       realTime,
       nfcQr,
       forceQr,
-      overtime,
-      totalHours,
     } = req.body;
 
     // Check if employee already exists by email or phone number
@@ -68,34 +63,6 @@ const addEmployeeController = async (req, res) => {
       });
     }
 
-    // Validate salary or hourly wages
-    if (salaryBased && (!salary || salary <= 0)) {
-      return res.status(400).json({
-        message:
-          "❌ Salary is required and must be greater than 0 for salaried employees.",
-        success: false,
-      });
-    }
-
-    if (!salaryBased && (!hourlyWages || hourlyWages <= 0)) {
-      return res.status(400).json({
-        message:
-          "❌ Hourly wages are required and must be greater than 0 for hourly employees.",
-        success: false,
-      });
-    }
-
-    // Compute total salary
-    let totalSalary = 0;
-    if (salaryBased) {
-      totalSalary = salary;
-      if (overtime > 0) {
-        totalSalary += overtime * (salary / 160) * 1.5; // Overtime rate = 1.5x hourly rate (assuming 160 work hours/month)
-      }
-    } else {
-      totalSalary = (hourlyWages || 0) * (totalHours || 0);
-    }
-
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,
@@ -104,12 +71,6 @@ const addEmployeeController = async (req, res) => {
       phoneNumber,
       shift,
       branch,
-      salaryBased,
-      // hourlyWages: hourlyWages || null,
-      salary: salary || null,
-      totalSalary,
-      overtime: overtime || 0,
-      totalHours: totalHours || 0,
       joiningDate,
       role: role || "user",
       avatar: avatar || { public_id: "", url: "" },
@@ -145,12 +106,6 @@ const addEmployeeController = async (req, res) => {
         uniqueKey: newEmployee.uniqueKey,
         shift,
         branch,
-        salaryBased,
-        // hourlyWages: newEmployee.hourlyWages,
-        salary: newEmployee.salary,
-        totalSalary: newEmployee.totalSalary,
-        overtime: newEmployee.overtime,
-        totalHours: newEmployee.totalHours,
         joiningDate: newEmployee.joiningDate,
         role: newEmployee.role,
         avatar: newEmployee.avatar,

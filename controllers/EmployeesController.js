@@ -52,6 +52,7 @@ const addEmployeeController = async (req, res) => {
       forceQr,
     } = req.body;
 
+    console.log(req.body);
     // Check if employee already exists by email
     const existingEmployee = await Employee.findOne({ email });
 
@@ -73,7 +74,6 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
-    console.log(req.body);
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,

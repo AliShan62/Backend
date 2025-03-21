@@ -56,12 +56,12 @@ const employeeSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Total hours cannot be negative"],
     },
-    uniqueKey: {
-      type: String,
-      unique: true,
-      required: true,
-      default: generateUniqueKey,
-    },
+    // uniqueKey: {
+    //   type: String,
+    //   unique: true,
+    //   required: true,
+    //   default: generateUniqueKey,
+    // },
     role: { type: String, default: "user", enum: ["user", "admin", "manager"] },
   },
   { timestamps: true }

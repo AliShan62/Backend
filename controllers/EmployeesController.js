@@ -29,7 +29,7 @@ const sendEmail = async (email, uniqueKey) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Welcome to the Location Tracking App",
-      text: `Welcome to our app! Your unique key is ${uniqueKey}. Please use this key to log in: http://yourapp.com/login`,
+      text: `Welcome to our app! Your unique key is. Please use this key to log in: http://yourapp.com/login`,
     };
 
     await transporter.sendMail(message);
@@ -101,7 +101,7 @@ const addEmployeeController = async (req, res) => {
       realTime,
       nfcQr,
       forceQr,
-      uniqueKey, // Assign generated uniqueKey
+      // uniqueKey, // Assign generated uniqueKey
     });
 
     // Save to database
@@ -119,7 +119,7 @@ const addEmployeeController = async (req, res) => {
         lastName,
         email,
         phoneNumber: newEmployee.phoneNumber,
-        uniqueKey,
+        // uniqueKey,
         shift,
         branch,
         joiningDate: newEmployee.joiningDate,

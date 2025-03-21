@@ -32,9 +32,12 @@ const employeeSchema = new mongoose.Schema(
     avatar: {
       public_id: {
         type: String,
-        required: [true, "Avatar public_id is required"],
+        default: null, // ✅ Allows null (optional)
       },
-      url: { type: String, required: [true, "Avatar URL is required"] },
+      url: {
+        type: String,
+        default: null, // ✅ Allows null (optional)
+      },
     },
     location: {
       lat: { type: Number, default: null },

@@ -73,6 +73,7 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
+    console.log(req.body);
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,

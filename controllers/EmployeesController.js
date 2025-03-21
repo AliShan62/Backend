@@ -5,6 +5,8 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const router = express.Router();
+const dotenv = require("dotenv");
+
 dotenv.config(); // Load environment variables
 
 // Function to generate a unique key

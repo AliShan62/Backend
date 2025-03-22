@@ -9,7 +9,7 @@ const {
 const { authMiddleware } = require("../middleware/authMiddleware");
 
 // Check-in route
-router.post("/checkin", authMiddleware, checkInController);
+router.post("/checkin", checkInController);
 
 // Check-out route
 router.post("/checkout", authMiddleware, checkOutController);

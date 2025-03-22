@@ -1,6 +1,5 @@
-const Attendance = require('../models/Attendance');
-const Employee = require('../models/Employee');
-
+const Attendance = require("../models/Attendance");
+const Employee = require("../models/Employee");
 
 // const checkInController = async (req, res) => {
 //     try {
@@ -54,64 +53,71 @@ const Employee = require('../models/Employee');
 // };
 
 const checkInController = async (req, res) => {
-    try {
-        const { employeeId } = req.body;
+  try {
+    const { uniqueKey } = req.body;
 
-        // Find the employee to get firstName and lastName
-        const employee = await Employee.findById(employeeId, 'firstName lastName branch');  // Fetch only firstName and lastName
-
-        // Check if employee exists
-        if (!employee) {
-            return res.status(404).json({
-                message: 'Employee not found.',
-                success: false,
-            });
-        }
-
-        // Find existing attendance for the employee on the same day
-        let attendance = await Attendance.findOne({
-            employeeId,
-            date: new Date().toISOString().split('T')[0],  // Match only the date part
-        });
-
-        if (attendance) {
-            return res.json({
-                message: 'Already checked in for today.',
-                status: 'Success',
-                employee,  // Include employee details (firstName and lastName)
-            });
-        }
-
-        // If no check-in record, create a new one
-        attendance = new Attendance({
-            employeeId,
-            firstName: employee.firstName,  // Store firstName
-            lastName: employee.lastName, // Store lastName
-            branch: employee.branch,
-            checkIn: new Date(),
-            status: 'Success',
-            date: new Date().toISOString().split('T')[0],  // Store only the date part
-        });
-
-        await attendance.save();
-
-        res.json({
-            message: 'Check-in successful',
-            status: 'Success',
-            attendance,
-            employee,  // Include employee details (firstName and lastName)
-        });
-    } catch (error) {
-        // Log detailed error for development
-        console.error("Check-In Error:", error);
-
-        res.status(500).json({
-            message: 'An error occurred during check-in.',
-            success: false,
-        });
+    // Validate input
+    if (!uniqueKey) {
+      return res.status(400).json({
+        message: "❌ Unique Key is required.",
+        success: false,
+      });
     }
-};
 
+    // Find the employee by uniqueKey
+    const employee = await Employee.findOne(
+      { uniqueKey },
+      "firstName lastName branch uniqueKey"
+    );
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "❌ Employee not found.",
+        success: false,
+      });
+    }
+
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split("T")[0];
+
+    // Check if the employee has already checked in today
+    const existingAttendance = await Attendance.findOne({
+      uniqueKey,
+      date: today,
+    });
+
+    if (existingAttendance) {
+      return res.status(200).json({
+        message: "✅ Already checked in for today.",
+        success: true,
+      });
+    }
+
+    // Create a new attendance record
+    const newAttendance = new Attendance({
+      uniqueKey,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      branch: employee.branch,
+      checkIn: new Date(),
+      status: "Success",
+      date: today,
+    });
+
+    await newAttendance.save();
+
+    res.status(201).json({
+      message: "✅ Check-in successful.",
+      success: true,
+    });
+  } catch (error) {
+    console.error("❌ Check-In Error:", error);
+    res.status(500).json({
+      message: "❌ An error occurred during check-in.",
+      success: false,
+    });
+  }
+};
 
 // const checkOutController = async (req, res) => {
 //     try {
@@ -170,36 +176,37 @@ const checkInController = async (req, res) => {
 // };
 
 const checkOutController = async (req, res) => {
-  try { 
+  try {
     const { employeeId } = req.body;
 
     // Find today's attendance record
-    const attendance = await Attendance.findOne({ 
+    const attendance = await Attendance.findOne({
       employeeId,
-      date: new Date().toISOString().split('T')[0], // Match only the date part
+      date: new Date().toISOString().split("T")[0], // Match only the date part
     });
 
     // If no attendance record found
     if (!attendance || !attendance.checkIn) {
       return res.status(400).json({
-        message: 'No check-in record found for today.',
-        status: 'Pending',
+        message: "No check-in record found for today.",
+        status: "Pending",
       });
     }
 
     // If the employee has already checked out
-    if (attendance.checkOut !== 'Pending') {
+    if (attendance.checkOut !== "Pending") {
       return res.status(400).json({
-        message: 'Already checked out for today.',
-        status: 'Success',
+        message: "Already checked out for today.",
+        status: "Success",
       });
     }
 
     // Update check-out time and calculate total hours worked
     attendance.checkOut = new Date();
-    const hoursWorked = (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
+    const hoursWorked =
+      (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
     attendance.totalHours = hoursWorked;
-    attendance.status = 'Success'; // Update status after check-out
+    attendance.status = "Success"; // Update status after check-out
 
     // Save updated attendance record
     await attendance.save();
@@ -209,7 +216,7 @@ const checkOutController = async (req, res) => {
 
     if (!employee) {
       return res.status(404).json({
-        message: 'Employee not found.',
+        message: "Employee not found.",
         success: false,
       });
     }
@@ -246,63 +253,58 @@ const checkOutController = async (req, res) => {
 
     // Respond with success
     res.status(200).json({
-      message: 'Check-out successful. Overtime calculated if applicable.',
-      status: 'Success',
+      message: "Check-out successful. Overtime calculated if applicable.",
+      status: "Success",
       attendance,
       employee,
     });
   } catch (error) {
     // Log error details for debugging
-    console.error('Check-Out Error:', error);
+    console.error("Check-Out Error:", error);
 
     // Respond with error message
     res.status(500).json({
-      message: 'An error occurred during check-out.',
+      message: "An error occurred during check-out.",
       success: false,
     });
   }
 };
 
-  
-
-
 const getAttendanceRecordsController = async (req, res) => {
-    try {
-        const { employeeId } = req.params;
+  try {
+    const { employeeId } = req.params;
 
-        // Fetch attendance records for the employee
-        const attendanceRecords = await Attendance.find({ employeeId });
-         // Fetch employee details for the response
-        const employee = await Employee.findById(employeeId);
-         
-        if (!attendanceRecords || attendanceRecords.length === 0) {
-            return res.status(404).json({
-                message: 'No attendance records found for this employee.',
-                success: false,
-            });
-        }
+    // Fetch attendance records for the employee
+    const attendanceRecords = await Attendance.find({ employeeId });
+    // Fetch employee details for the response
+    const employee = await Employee.findById(employeeId);
 
-        res.status(200).json({
-            message: 'Attendance records fetched successfully',
-            success: true,
-            attendanceRecords,
-            employee
-        });
-    } catch (error) {
-        // Log detailed error for development
-        console.error("Get Attendance Error:", error);
-
-        res.status(500).json({
-            message: 'An error occurred while fetching attendance records.',
-            success: false,
-        });
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return res.status(404).json({
+        message: "No attendance records found for this employee.",
+        success: false,
+      });
     }
+
+    res.status(200).json({
+      message: "Attendance records fetched successfully",
+      success: true,
+      attendanceRecords,
+      employee,
+    });
+  } catch (error) {
+    // Log detailed error for development
+    console.error("Get Attendance Error:", error);
+
+    res.status(500).json({
+      message: "An error occurred while fetching attendance records.",
+      success: false,
+    });
+  }
 };
 
-
-
-module.exports = { 
-    checkInController,
-    checkOutController,
-     getAttendanceRecordsController
-    };
+module.exports = {
+  checkInController,
+  checkOutController,
+  getAttendanceRecordsController,
+};

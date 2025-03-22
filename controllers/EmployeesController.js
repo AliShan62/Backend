@@ -189,7 +189,6 @@ const employeeLoginController = async (req, res) => {
       message: "Login successful.",
       success: true,
       employee: {
-        token,
         ...employee.toObject(), // Spread employee details for cleaner response
       },
     });

@@ -78,9 +78,17 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
-    // Generate uniqueKey
-    const employeeCount = await Employee.countDocuments();
-    const uniqueKey = `EPM-${1000 + employeeCount + 1}`;
+    // Generate a unique 5-digit key
+    let uniqueKey;
+    let isUnique = false;
+    while (!isUnique) {
+      const randomNum = Math.floor(10000 + Math.random() * 90000); // Generate a 5-digit random number
+      uniqueKey = `EPM-${randomNum}`; // Format as EPM-XXXXX
+      const existingKey = await Employee.findOne({ uniqueKey });
+      if (!existingKey) {
+        isUnique = true;
+      }
+    }
 
     // Create new employee instance
     const newEmployee = new Employee({

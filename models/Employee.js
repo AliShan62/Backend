@@ -26,17 +26,22 @@ const employeeSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
       unique: true,
-      sparse: true, // Makes it optional while maintaining uniqueness
+      sparse: true,
       trim: true,
+    },
+    uniqueKey: {
+      type: String,
+      unique: true,
+      required: true,
     },
     avatar: {
       public_id: {
         type: String,
-        default: null, // ✅ Allows null (optional)
+        default: null,
       },
       url: {
         type: String,
-        default: null, // ✅ Allows null (optional)
+        default: null,
       },
     },
     location: {
@@ -59,6 +64,15 @@ const employeeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Generate uniqueKey before saving the employee
+employeeSchema.pre("save", async function (next) {
+  if (!this.uniqueKey) {
+    const count = await mongoose.model("Employee").countDocuments();
+    this.uniqueKey = `EPM-${1000 + count + 1}`;
+  }
+  next();
+});
 
 // Create the Employee model
 const Employee = mongoose.model("Employee", employeeSchema);

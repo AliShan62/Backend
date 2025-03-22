@@ -54,61 +54,66 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    const { employeeId } = req.body;
+    const { uniqueKey } = req.body;
 
-    // Find the employee to get firstName and lastName
-    const employee = await Employee.findById(
-      employeeId,
+    // Validate input
+    if (!uniqueKey) {
+      return res.status(400).json({
+        message: "❌ Unique Key is required.",
+        success: false,
+      });
+    }
+
+    // Find the employee using uniqueKey
+    const employee = await Employee.findOne(
+      { uniqueKey },
       "firstName lastName branch"
-    ); // Fetch only firstName and lastName
+    );
 
     // Check if employee exists
     if (!employee) {
       return res.status(404).json({
-        message: "Employee not found.",
+        message: "❌ Employee not found.",
         success: false,
       });
     }
 
     // Find existing attendance for the employee on the same day
     let attendance = await Attendance.findOne({
-      employeeId,
-      date: new Date().toISOString().split("T")[0], // Match only the date part
+      uniqueKey,
+      date: new Date().toISOString().split("T")[0], // Match today's date
     });
 
     if (attendance) {
       return res.json({
-        message: "Already checked in for today.",
-        status: "Success",
-        employee, // Include employee details (firstName and lastName)
+        message: "✅ Already checked in for today.",
+        success: true,
+        attendance,
       });
     }
 
-    // If no check-in record, create a new one
+    // Create a new check-in record
     attendance = new Attendance({
-      employeeId,
-      firstName: employee.firstName, // Store firstName
-      lastName: employee.lastName, // Store lastName
+      uniqueKey,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
       branch: employee.branch,
       checkIn: new Date(),
-      status: "Success",
+      status: "Pending",
       date: new Date().toISOString().split("T")[0], // Store only the date part
     });
 
     await attendance.save();
 
     res.json({
-      message: "Check-in successful",
-      status: "Success",
+      message: "✅ Check-in successful.",
+      success: true,
       attendance,
-      employee, // Include employee details (firstName and lastName)
     });
   } catch (error) {
-    // Log detailed error for development
     console.error("Check-In Error:", error);
-
     res.status(500).json({
-      message: "An error occurred during check-in.",
+      message: "❌ An error occurred during check-in.",
       success: false,
     });
   }

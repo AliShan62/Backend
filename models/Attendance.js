@@ -2,68 +2,67 @@ const mongoose = require("mongoose");
 
 const attendanceSchema = new mongoose.Schema(
   {
-    employeeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
-      required: true, // Links attendance to an employee
+    uniqueKey: {
+      type: String,
+      required: [true, "❌ Unique Key is required."],
     },
     firstName: {
       type: String,
-      ref: "Employee",
-      required: true,
+      required: [true, "❌ First Name is required."],
     },
     lastName: {
       type: String,
-      ref: "Employee",
-      required: true,
+      required: [true, "❌ Last Name is required."],
     },
     branch: {
       type: String,
-      required: [true, "Enter the branch"],
+      required: [true, "❌ Branch is required."],
     },
     checkIn: {
       type: Date,
-      default: null, // Will store check-in time
+      default: null,
     },
     checkOut: {
       type: mongoose.Schema.Types.Mixed,
-      default: "Pending", // Can be a date or 'Pending'
+      default: "Pending",
       validate: {
         validator: function (value) {
           return value === "Pending" || value instanceof Date;
         },
-        message: 'CheckOut must be a date or "Pending".',
+        message: '❌ CheckOut must be a date or "Pending".',
       },
     },
     totalHours: {
       type: Number,
-      default: 0, // Auto-calculated based on check-in and check-out
+      default: 0,
     },
     status: {
       type: String,
-      enum: ["Pending", "Success"], // "Pending" before check-out, "Success" after
+      enum: ["Pending", "Success"],
       default: "Pending",
     },
     date: {
       type: String,
-      required: true,
+      required: [true, "❌ Date is required."],
       validate: {
         validator: function (value) {
-          return /^\d{4}-\d{2}-\d{2}$/.test(value); // Format YYYY-MM-DD
+          return /^\d{4}-\d{2}-\d{2}$/.test(value);
         },
-        message: "Date must be in the format YYYY-MM-DD.",
+        message: "❌ Date must be in the format YYYY-MM-DD.",
       },
     },
   },
   { timestamps: true }
-); // Automatically adds createdAt and updatedAt fields
+);
 
-attendanceSchema.methods.calculateTotalHours = function () {
+// ✅ Automatically calculates total hours before saving
+attendanceSchema.pre("save", function (next) {
   if (this.checkIn && this.checkOut instanceof Date) {
     const diffInMs = this.checkOut - this.checkIn;
-    this.totalHours = Math.round(diffInMs / (1000 * 60 * 60)); // Convert ms to hours
+    this.totalHours = Math.round(diffInMs / (1000 * 60 * 60));
   }
-};
+  next();
+});
 
 // Create the Attendance model
 const Attendance = mongoose.model("Attendance", attendanceSchema);

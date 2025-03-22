@@ -54,69 +54,62 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    const { uniqueKey } = req.body;
+    const { employeeId } = req.body;
 
-    // ✅ Validate input
-    if (!uniqueKey) {
-      return res.status(400).json({
-        message: "❌ Unique Key is required.",
-        success: false,
-      });
-    }
+    // Find the employee to get firstName and lastName
+    const employee = await Employee.findById(
+      employeeId,
+      "firstName lastName branch"
+    ); // Fetch only firstName and lastName
 
-    // ✅ Find the employee by uniqueKey
-    const employee = await Employee.findOne({ uniqueKey })
-      .select("firstName lastName branch")
-      .lean();
-
+    // Check if employee exists
     if (!employee) {
       return res.status(404).json({
-        message: "❌ Employee not found.",
+        message: "Employee not found.",
         success: false,
       });
     }
 
-    // ✅ Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split("T")[0];
+    // Find existing attendance for the employee on the same day
+    let attendance = await Attendance.findOne({
+      employeeId,
+      date: new Date().toISOString().split("T")[0], // Match only the date part
+    });
 
-    // ✅ Check if employee already checked in today
-    const existingAttendance = await Attendance.findOne({
-      uniqueKey,
-      date: today,
-    }).lean();
-
-    if (existingAttendance) {
-      return res.status(200).json({
-        message: "✅ Already checked in for today.",
-        success: true,
-        attendance: existingAttendance,
+    if (attendance) {
+      return res.json({
+        message: "Already checked in for today.",
+        status: "Success",
+        employee, // Include employee details (firstName and lastName)
       });
     }
 
-    // ✅ Create new attendance record
-    const newAttendance = await Attendance.create({
-      uniqueKey,
-      firstName: employee.firstName,
-      lastName: employee.lastName,
+    // If no check-in record, create a new one
+    attendance = new Attendance({
+      employeeId,
+      firstName: employee.firstName, // Store firstName
+      lastName: employee.lastName, // Store lastName
       branch: employee.branch,
       checkIn: new Date(),
-      checkOut: "Pending",
-      totalHours: 0,
-      status: "Pending",
-      date: today,
+      status: "Success",
+      date: new Date().toISOString().split("T")[0], // Store only the date part
     });
 
-    return res.status(201).json({
-      message: "✅ Check-in successful.",
-      success: true,
-      attendance: newAttendance,
+    await attendance.save();
+
+    res.json({
+      message: "Check-in successful",
+      status: "Success",
+      attendance,
+      employee, // Include employee details (firstName and lastName)
     });
   } catch (error) {
-    console.error("❌ Check-In Error:", error);
-    return res.status(500).json({
-      message: "❌ An error occurred during check-in.",
+    // Log detailed error for development
+    console.error("Check-In Error:", error);
+
+    res.status(500).json({
+      message: "An error occurred during check-in.",
       success: false,
-      error: error.message,
     });
   }
 };

@@ -34,10 +34,9 @@ const JWT = require("jsonwebtoken");
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer Token
-    const { uniqueKey } = req.body; // Extract uniqueKey from body
+    const { uniqueKey, token } = req.query;
 
-    console.log("Token received:", req.headers.authorization);
+    //    console.log(uniqueKey, token)
 
     if (!token) {
       return res.status(401).send({
@@ -46,19 +45,19 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    JWT.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    JWT.verify(token, process.env.JWT_SECRET, (err, decode) => {
       if (err) {
         return res.status(401).send({
           message: "Auth Failed",
           success: false,
         });
       } else {
-        req.user = { userId: decoded.id, role: decoded.role }; // Store user details
+        req.user = { userId: decode.id };
         next();
       }
     });
   } catch (error) {
-    console.error("Auth Error:", error);
+    console.log(error);
     res.status(401).send({
       message: "Auth Failed",
       success: false,

@@ -193,14 +193,14 @@ const checkOutController = async (req, res) => {
   try {
     const { uniqueKey } = req.params; // Take uniqueKey from URL parameters
 
-    // Find today's attendance record using uniqueKey
+    // Find attendance record using uniqueKey
     const attendance = await Attendance.findOne({ uniqueKey });
 
-    // If no attendance record is found
-    if (!attendance || !attendance.checkIn) {
-      return res.status(400).json({
-        message: "No check-in record found for today.",
-        status: "Pending",
+    // If attendance record is not found, proceed without error
+    if (!attendance) {
+      return res.status(200).json({
+        message: "No check-in record found. Proceeding with check-out.",
+        status: "Success",
       });
     }
 

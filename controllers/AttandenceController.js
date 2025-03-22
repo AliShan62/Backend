@@ -188,50 +188,53 @@ const checkInController = async (req, res) => {
 //         });
 //     }
 // };
-
 const checkOutController = async (req, res) => {
   try {
-    const { uniqueKey } = req.body; // Ensure check-out is based on uniqueKey
+    console.log("Received Params:", req.params); // Debugging log
 
-    // Find today's attendance record using uniqueKey
-    const attendance = await Attendance.findOne({ uniqueKey });
+    const { uniqueKey } = req.params; // Extract uniqueKey from URL parameters
 
-    // If no attendance record is found
-    if (!attendance || !attendance.checkIn) {
+    if (!uniqueKey) {
       return res.status(400).json({
-        message: "No check-in record found for today.",
-        status: "Pending",
+        message: "Unique Key is required.",
+        success: false,
       });
     }
 
-    // If already checked out
+    console.log("Checking Attendance Record...");
+    const todayDate = new Date().toISOString().split("T")[0];
+
+    const attendance = await Attendance.findOne({
+      uniqueKey,
+      date: todayDate,
+    });
+
+    if (!attendance) {
+      return res.status(404).json({
+        message: "No check-in record found for today.",
+        success: false,
+      });
+    }
+
     if (attendance.checkOut !== "Pending") {
       return res.status(400).json({
-        message: "Already checked out for today.",
-        status: "Success",
+        message: "You have already checked out today.",
+        success: false,
       });
     }
 
-    // Update check-out time and calculate total hours worked
+    console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
     attendance.totalHours =
-      (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
-    attendance.status = "Success"; // Mark check-out as successful
+      (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
+    attendance.status = "Success";
 
-    // Save updated attendance record
     await attendance.save();
 
-    // Update total hours in employee profile
-    const employee = await Employee.findById(attendance.employeeId);
-    if (employee) {
-      employee.totalHours += attendance.totalHours;
-      await employee.save();
-    }
-
-    // Respond with minimal success message
+    console.log("Check-out Successful!");
     res.status(200).json({
       message: "Check-out successful.",
-      status: "Success",
+      success: true,
     });
   } catch (error) {
     console.error("Check-Out Error:", error);

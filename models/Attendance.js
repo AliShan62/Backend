@@ -8,7 +8,7 @@ const attendanceSchema = new mongoose.Schema(
     },
     firstName: {
       type: String,
-      required: [true, "❌ First Name is required."],
+      required: [true, "a❌ First Name is required."],
     },
     lastName: {
       type: String,

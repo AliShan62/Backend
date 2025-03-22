@@ -56,7 +56,7 @@ const checkInController = async (req, res) => {
   try {
     const { uniqueKey } = req.body;
 
-    // Validate input
+    // ✅ Validate input
     if (!uniqueKey) {
       return res.status(400).json({
         message: "❌ Unique Key is required.",
@@ -64,10 +64,10 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Find the employee by uniqueKey
-    const employee = await Employee.findOne({ uniqueKey }).select(
-      "firstName lastName branch uniqueKey"
-    );
+    // ✅ Find the employee by uniqueKey
+    const employee = await Employee.findOne({ uniqueKey })
+      .select("firstName lastName branch")
+      .lean();
 
     if (!employee) {
       return res.status(404).json({
@@ -76,44 +76,44 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Get today's date in YYYY-MM-DD format
+    // ✅ Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split("T")[0];
 
-    // Check if the employee has already checked in today
+    // ✅ Check if employee already checked in today
     const existingAttendance = await Attendance.findOne({
       uniqueKey,
       date: today,
-    });
+    }).lean();
 
     if (existingAttendance) {
       return res.status(200).json({
         message: "✅ Already checked in for today.",
         success: true,
-        attendance: existingAttendance, // Send existing record for reference
+        attendance: existingAttendance,
       });
     }
 
-    // Create a new attendance record
-    const newAttendance = new Attendance({
+    // ✅ Create new attendance record
+    const newAttendance = await Attendance.create({
       uniqueKey,
       firstName: employee.firstName,
       lastName: employee.lastName,
       branch: employee.branch,
       checkIn: new Date(),
-      status: "Pending", // Status remains "Pending" until check-out
+      checkOut: "Pending",
+      totalHours: 0,
+      status: "Pending",
       date: today,
     });
 
-    await newAttendance.save();
-
-    res.status(201).json({
+    return res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
-      attendance: newAttendance, // Return the newly created attendance
+      attendance: newAttendance,
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "❌ An error occurred during check-in.",
       success: false,
       error: error.message,

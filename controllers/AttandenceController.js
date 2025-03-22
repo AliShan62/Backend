@@ -54,7 +54,7 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    let { uniqueKey, latitude, longitude } = req.body;
+    let { uniqueKey, latitude, longitude } = req.params; // Get data from URL params
 
     // Trim uniqueKey and validate inputs
     uniqueKey = uniqueKey?.trim();
@@ -62,13 +62,6 @@ const checkInController = async (req, res) => {
     if (!uniqueKey) {
       return res.status(400).json({
         message: "❌ Unique Key is required.",
-        success: false,
-      });
-    }
-
-    if (latitude === undefined || longitude === undefined) {
-      return res.status(400).json({
-        message: "❌ Latitude and Longitude are required.",
         success: false,
       });
     }
@@ -111,7 +104,7 @@ const checkInController = async (req, res) => {
 
     const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
 
-    // Check if the employee has already checked in today
+    // Check if already checked in today
     const existingAttendance = await Attendance.findOne({
       uniqueKey,
       date: todayDate,
@@ -121,11 +114,10 @@ const checkInController = async (req, res) => {
       return res.status(409).json({
         message: "✅ You have already checked in today.",
         success: true,
-        data: existingAttendance,
       });
     }
 
-    // Create a new attendance record
+    // Create new attendance record
     const newAttendance = new Attendance({
       uniqueKey,
       firstName: employee.firstName,
@@ -144,7 +136,6 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
-      data: newAttendance,
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);

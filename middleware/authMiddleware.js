@@ -30,36 +30,42 @@
 
 // module.exports = authenticateJWT;
 
-const JWT = require("jsonwebtoken");
+const Employee = require("../models/Employee");
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const { uniqueKey, token } = req.query;
+    const { uniqueKey } = req.query; // Get uniqueKey from request query
 
-    //    console.log(uniqueKey, token)
-
-    if (!token) {
+    // Validate input
+    if (!uniqueKey) {
       return res.status(401).send({
-        message: "Token missing",
+        message: "❌ Unique Key is required.",
         success: false,
       });
     }
 
-    JWT.verify(token, process.env.JWT_SECRET, (err, decode) => {
-      if (err) {
-        return res.status(401).send({
-          message: "Auth Failed",
-          success: false,
-        });
-      } else {
-        req.user = { userId: decode.id };
-        next();
-      }
-    });
+    // Find the employee using uniqueKey
+    const employee = await Employee.findOne({ uniqueKey });
+
+    // Check if employee exists
+    if (!employee) {
+      return res.status(401).send({
+        message: "❌ Authentication failed. Invalid Unique Key.",
+        success: false,
+      });
+    }
+
+    // Attach employee details to the request
+    req.user = {
+      userId: employee._id,
+      role: employee.role, // Assuming role is stored in the Employee model
+    };
+
+    next(); // Proceed to the next middleware
   } catch (error) {
-    console.log(error);
-    res.status(401).send({
-      message: "Auth Failed",
+    console.error("Auth Error:", error);
+    res.status(500).send({
+      message: "❌ Internal Server Error.",
       success: false,
     });
   }
@@ -71,7 +77,7 @@ const isAdmin = async (req, res, next) => {
   } else {
     res.status(403).send({
       success: false,
-      message: "Access denied. You are not an admin.",
+      message: "❌ Access denied. You are not an admin.",
     });
   }
 };

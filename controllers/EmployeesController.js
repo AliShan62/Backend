@@ -12,7 +12,7 @@ dotenv.config(); // Load environment variables
 dotenv.config(); // Load environment variables
 
 // Send Email Function
-const sendEmail = async (email) => {
+const sendEmail = async (email, uniqueKey) => {
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -26,7 +26,7 @@ const sendEmail = async (email) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Welcome to the Location Tracking App",
-      text: `Welcome to our app! Please log in to get started: http://yourapp.com/login`,
+      text: `Welcome to our app! Your Employee ID is ${uniqueKey}. Please log in to get started: http://yourapp.com/login`,
     };
 
     await transporter.sendMail(message);
@@ -60,7 +60,6 @@ const addEmployeeController = async (req, res) => {
 
     // Check if employee already exists by email
     const existingEmployee = await Employee.findOne({ email });
-
     if (existingEmployee) {
       return res.status(400).json({
         message: "❌ Employee with this email already exists.",
@@ -79,6 +78,10 @@ const addEmployeeController = async (req, res) => {
       }
     }
 
+    // Generate uniqueKey
+    const employeeCount = await Employee.countDocuments();
+    const uniqueKey = `EPM-${1000 + employeeCount + 1}`;
+
     // Create new employee instance
     const newEmployee = new Employee({
       firstName,
@@ -95,13 +98,14 @@ const addEmployeeController = async (req, res) => {
       realTime,
       nfcQr,
       forceQr,
+      uniqueKey, // Assign the generated uniqueKey
     });
 
     // Save to database
     await newEmployee.save();
 
-    // Send welcome email
-    await sendEmail(email);
+    // Send welcome email with uniqueKey
+    await sendEmail(email, uniqueKey);
 
     // Return success response
     res.status(201).json({
@@ -122,13 +126,14 @@ const addEmployeeController = async (req, res) => {
         realTime: newEmployee.realTime,
         nfcQr: newEmployee.nfcQr,
         forceQr: newEmployee.forceQr,
+        uniqueKey: newEmployee.uniqueKey, // Include uniqueKey in response
       },
     });
   } catch (error) {
     console.error("❌ Error adding employee:", error);
     res.status(500).json({
-      // message: "❌ An error occurred while adding the employee.",
-      message: error,
+      message: "❌ An error occurred while adding the employee.",
+      error: error.message,
       success: false,
     });
   }
@@ -146,9 +151,9 @@ const employeeLoginController = async (req, res) => {
       });
     }
 
-    // Fetch employee details
+    // Fetch employee details (excluding salary-related fields)
     const employee = await Employee.findOne({ uniqueKey }).select(
-      "firstName lastName email phoneNumber branch shift hourlyWages salary salaryBased totalSalary role uniqueKey"
+      "firstName lastName email phoneNumber branch shift role uniqueKey"
     );
 
     if (!employee) {
@@ -159,24 +164,10 @@ const employeeLoginController = async (req, res) => {
     }
 
     // Log activity
-    const loginActivity = new LoginActivity({
+    await new LoginActivity({
       uniqueKey: employee.uniqueKey,
-      employeeDetails: {
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        email: employee.email,
-        phoneNumber: employee.phoneNumber,
-        branch: employee.branch,
-        shift: employee.shift,
-        hourlyWages: employee.hourlyWages,
-        salary: employee.salary,
-        salaryBased: employee.salaryBased,
-        totalSalary: employee.totalSalary,
-        role: employee.role,
-      },
-    });
-
-    await loginActivity.save();
+      employeeDetails: employee.toObject(),
+    }).save();
 
     // Generate JWT
     const token = jwt.sign(
@@ -198,31 +189,111 @@ const employeeLoginController = async (req, res) => {
       message: "Login successful.",
       success: true,
       employee: {
-        token: token,
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        email: employee.email,
-        phoneNumber: employee.phoneNumber,
-        branch: employee.branch,
-        shift: employee.shift,
-        hourlyWages: employee.hourlyWages,
-        salary: employee.salary,
-        salaryBased: employee.salaryBased,
-        totalSalary: employee.totalSalary,
-        role: employee.role,
-        uniqueKey: employee.uniqueKey,
+        token,
+        ...employee.toObject(), // Spread employee details for cleaner response
       },
     });
 
-    console.log("Login attempt for uniqueKey:", uniqueKey, token);
+    console.log("✅ Login successful for uniqueKey:", uniqueKey);
   } catch (error) {
-    console.error("Error logging in employee:", error.message, error.stack);
+    console.error("❌ Error logging in employee:", error.message);
     res.status(500).json({
       message: "An error occurred during login.",
       success: false,
     });
   }
 };
+
+//
+
+//   try {
+//     const { uniqueKey } = req.body;
+
+//     // Validate input
+//     if (!uniqueKey || typeof uniqueKey !== "string") {
+//       return res.status(400).json({
+//         message: "Invalid unique key provided.",
+//         success: false,
+//       });
+//     }
+
+//     // Fetch employee details
+//     const employee = await Employee.findOne({ uniqueKey }).select(
+//       "firstName lastName email phoneNumber branch shift hourlyWages salary salaryBased totalSalary role uniqueKey"
+//     );
+
+//     if (!employee) {
+//       return res.status(404).json({
+//         message: "Employee not found with this unique key.",
+//         success: false,
+//       });
+//     }
+
+//     // Log activity
+//     const loginActivity = new LoginActivity({
+//       uniqueKey: employee.uniqueKey,
+//       employeeDetails: {
+//         firstName: employee.firstName,
+//         lastName: employee.lastName,
+//         email: employee.email,
+//         phoneNumber: employee.phoneNumber,
+//         branch: employee.branch,
+//         shift: employee.shift,
+//         hourlyWages: employee.hourlyWages,
+//         salary: employee.salary,
+//         salaryBased: employee.salaryBased,
+//         totalSalary: employee.totalSalary,
+//         role: employee.role,
+//       },
+//     });
+
+//     await loginActivity.save();
+
+//     // Generate JWT
+//     const token = jwt.sign(
+//       { uniqueKey: employee.uniqueKey, role: employee.role },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+
+//     // Set token in cookies
+//     res.cookie("authToken", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production",
+//       sameSite: "strict",
+//       maxAge: 3600000,
+//     });
+
+//     // Respond with employee details
+//     res.status(200).json({
+//       message: "Login successful.",
+//       success: true,
+//       employee: {
+//         token: token,
+//         firstName: employee.firstName,
+//         lastName: employee.lastName,
+//         email: employee.email,
+//         phoneNumber: employee.phoneNumber,
+//         branch: employee.branch,
+//         shift: employee.shift,
+//         hourlyWages: employee.hourlyWages,
+//         salary: employee.salary,
+//         salaryBased: employee.salaryBased,
+//         totalSalary: employee.totalSalary,
+//         role: employee.role,
+//         uniqueKey: employee.uniqueKey,
+//       },
+//     });
+
+//     console.log("Login attempt for uniqueKey:", uniqueKey, token);
+//   } catch (error) {
+//     console.error("Error logging in employee:", error.message, error.stack);
+//     res.status(500).json({
+//       message: "An error occurred during login.",
+//       success: false,
+//     });
+//   }
+// };
 
 const getProfileController = async (req, res) => {
   try {

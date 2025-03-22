@@ -64,8 +64,15 @@ const checkInController = async (req, res) => {
       });
     }
 
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        message: "❌ Latitude and Longitude are required.",
+        success: false,
+      });
+    }
+
     // Find the employee using uniqueKey
-    const employee = await Employee.findOne(
+    let employee = await Employee.findOne(
       { uniqueKey },
       "firstName lastName branch location"
     );
@@ -77,9 +84,6 @@ const checkInController = async (req, res) => {
         success: false,
       });
     }
-
-    // Extract location from employee
-    const employeeLocation = employee.location || { lat: null, lng: null };
 
     // Find existing attendance for the employee on the same day
     let attendance = await Attendance.findOne({
@@ -94,16 +98,21 @@ const checkInController = async (req, res) => {
       });
     }
 
+    // Update employee's location with check-in coordinates
+    employee.location.lat = latitude;
+    employee.location.lng = longitude;
+    await employee.save(); // Save updated location
+
     // Create a new check-in record
     attendance = new Attendance({
       uniqueKey,
       firstName: employee.firstName,
       lastName: employee.lastName,
       branch: employee.branch,
-      DateTime: new Date(),
+      checkIn: new Date(),
       location: {
-        lat: latitude || employeeLocation.lat,
-        lng: longitude || employeeLocation.lng,
+        lat: latitude,
+        lng: longitude,
       },
       status: "Pending",
       date: new Date().toISOString().split("T")[0], // Store only the date part
@@ -112,7 +121,7 @@ const checkInController = async (req, res) => {
     await attendance.save();
 
     res.json({
-      message: "✅ Check-in successful.",
+      message: "✅ Check-in successful, location updated.",
       success: true,
       attendance,
     });

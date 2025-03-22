@@ -54,10 +54,9 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
+    console.log("🔍 Received Query Params:", req.query); // Debugging log
 
-    // Trim uniqueKey and validate inputs
-    uniqueKey = uniqueKey?.trim();
+    let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
 
     if (!uniqueKey) {
       return res.status(400).json({
@@ -89,7 +88,7 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Find the employee using uniqueKey
+    console.log("🔍 Checking Employee Record...");
     const employee = await Employee.findOne(
       { uniqueKey },
       "firstName lastName branch"
@@ -104,7 +103,7 @@ const checkInController = async (req, res) => {
 
     const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
 
-    // Check if already checked in today
+    console.log("🔍 Checking Existing Attendance for:", todayDate);
     const existingAttendance = await Attendance.findOne({
       uniqueKey,
       date: todayDate,
@@ -118,7 +117,7 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Create new attendance record
+    console.log("✅ Creating New Attendance Record...");
     const newAttendance = new Attendance({
       uniqueKey,
       firstName: employee.firstName,
@@ -134,6 +133,7 @@ const checkInController = async (req, res) => {
 
     await newAttendance.save();
 
+    console.log("✅ Check-in Successful!");
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,

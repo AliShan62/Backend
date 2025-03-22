@@ -56,10 +56,9 @@ const checkInController = async (req, res) => {
   try {
     let { uniqueKey, latitude, longitude } = req.body;
 
-    // Trim uniqueKey
+    // Trim uniqueKey and validate inputs
     uniqueKey = uniqueKey?.trim();
 
-    // Validate input
     if (!uniqueKey) {
       return res.status(400).json({
         message: "❌ Unique Key is required.",
@@ -74,9 +73,25 @@ const checkInController = async (req, res) => {
       });
     }
 
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
+
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({
         message: "❌ Latitude and Longitude must be valid numbers.",
+        success: false,
+      });
+    }
+
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message:
+          "❌ Latitude must be between -90 and 90, and Longitude between -180 and 180.",
         success: false,
       });
     }
@@ -87,7 +102,6 @@ const checkInController = async (req, res) => {
       "firstName lastName branch"
     );
 
-    // Check if employee exists
     if (!employee) {
       return res.status(404).json({
         message: "❌ Employee not found.",
@@ -95,7 +109,7 @@ const checkInController = async (req, res) => {
       });
     }
 
-    const todayDate = new Date().toISOString().split("T")[0]; // Format today's date
+    const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
 
     // Check if the employee has already checked in today
     const existingAttendance = await Attendance.findOne({
@@ -111,25 +125,26 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Create a new check-in record
-    const attendance = new Attendance({
+    // Create a new attendance record
+    const newAttendance = new Attendance({
       uniqueKey,
       firstName: employee.firstName,
       lastName: employee.lastName,
       branch: employee.branch,
       checkIn: new Date(),
+      checkOut: "Pending",
       status: "Pending",
-      date: todayDate, // Store only the date part
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
+      date: todayDate,
+      latitude,
+      longitude,
     });
 
-    await attendance.save();
+    await newAttendance.save();
 
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
-      data: attendance,
+      data: newAttendance,
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);

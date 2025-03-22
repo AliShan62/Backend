@@ -8,7 +8,7 @@ const attendanceSchema = new mongoose.Schema(
     },
     firstName: {
       type: String,
-      required: [true, "a❌ First Name is required."],
+      required: [true, "❌ First Name is required."], // Fixed typo
     },
     lastName: {
       type: String,
@@ -51,6 +51,14 @@ const attendanceSchema = new mongoose.Schema(
         message: "❌ Date must be in the format YYYY-MM-DD.",
       },
     },
+    latitude: {
+      type: Number,
+      required: [true, "❌ Latitude is required."],
+    },
+    longitude: {
+      type: Number,
+      required: [true, "❌ Longitude is required."],
+    },
   },
   { timestamps: true }
 );
@@ -59,7 +67,7 @@ const attendanceSchema = new mongoose.Schema(
 attendanceSchema.pre("save", function (next) {
   if (this.checkIn && this.checkOut instanceof Date) {
     const diffInMs = this.checkOut - this.checkIn;
-    this.totalHours = Math.round(diffInMs / (1000 * 60 * 60));
+    this.totalHours = Math.max(0, Math.round(diffInMs / (1000 * 60 * 60))); // Ensures non-negative hours
   }
   next();
 });

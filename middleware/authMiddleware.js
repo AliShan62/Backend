@@ -1,11 +1,10 @@
-
 // const jwt = require('jsonwebtoken');
 
 // // Middleware to verify JWT
 // const authenticateJWT = (req, res, next) => {
 //   // Get token from cookies
 //   const token = req.cookies.authToken;
-  
+
 //   console.log(token)
 //   // If no token is found, deny access
 //   if (!token) {
@@ -31,52 +30,49 @@
 
 // module.exports = authenticateJWT;
 
-
-
-const JWT = require('jsonwebtoken');
+const JWT = require("jsonwebtoken");
 
 const authMiddleware = async (req, res, next) => {
-    try {
-        const {uniqueKey, token} = req.query;
-        
-    //    console.log(uniqueKey, token)
+  try {
+    const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer Token
+    const { uniqueKey } = req.body; // Extract uniqueKey from body
 
-        if (!token) {
-            return res.status(401).send({
-                message: 'Token missing',
-                success: false,
-            });
-        }
-
-        JWT.verify(token, process.env.JWT_SECRET, (err, decode) => {
-            if (err) {
-                return res.status(401).send({
-                    message: 'Auth Failed',
-                    success: false,
-                });
-            } else {
-                req.user = { userId: decode.id };
-                next();
-            }
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(401).send({
-            message: 'Auth Failed',
-            success: false,
-        });
+    if (!token) {
+      return res.status(401).send({
+        message: "Token missing",
+        success: false,
+      });
     }
+
+    JWT.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({
+          message: "Auth Failed",
+          success: false,
+        });
+      } else {
+        req.user = { userId: decoded.id, role: decoded.role }; // Store user details
+        next();
+      }
+    });
+  } catch (error) {
+    console.error("Auth Error:", error);
+    res.status(401).send({
+      message: "Auth Failed",
+      success: false,
+    });
+  }
 };
 
 const isAdmin = async (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next();
-    } else {
-        res.status(403).send({
-            success: false,
-            message: 'Access denied. You are not an admin.',
-        });
-    }
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).send({
+      success: false,
+      message: "Access denied. You are not an admin.",
+    });
+  }
 };
 
 module.exports = { authMiddleware, isAdmin };

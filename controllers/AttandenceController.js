@@ -54,7 +54,7 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    const { uniqueKey } = req.body;
+    const { uniqueKey, latitude, longitude } = req.body; // Get uniqueKey and location
 
     // Validate input
     if (!uniqueKey) {
@@ -67,7 +67,7 @@ const checkInController = async (req, res) => {
     // Find the employee using uniqueKey
     const employee = await Employee.findOne(
       { uniqueKey },
-      "firstName lastName branch"
+      "firstName lastName branch location"
     );
 
     // Check if employee exists
@@ -78,11 +78,12 @@ const checkInController = async (req, res) => {
       });
     }
 
+    // Extract location from employee
+    const employeeLocation = employee.location || { lat: null, lng: null };
+
     // Find existing attendance for the employee on the same day
     let attendance = await Attendance.findOne({
       uniqueKey,
-      latitude,
-      longitude,
       date: new Date().toISOString().split("T")[0], // Match today's date
     });
 
@@ -99,7 +100,11 @@ const checkInController = async (req, res) => {
       firstName: employee.firstName,
       lastName: employee.lastName,
       branch: employee.branch,
-      checkIn: new Date(),
+      DateTime: new Date(),
+      location: {
+        lat: latitude || employeeLocation.lat,
+        lng: longitude || employeeLocation.lng,
+      },
       status: "Pending",
       date: new Date().toISOString().split("T")[0], // Store only the date part
     });

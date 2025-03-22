@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const checkInOutHistoryReportSchema = new mongoose.Schema({
   branchSelection: { type: String, required: true },
@@ -10,7 +10,7 @@ const checkInOutHistoryReportSchema = new mongoose.Schema({
 });
 
 const CheckInOutHistoryReport = mongoose.model(
-  'CheckInOutHistoryReport',
+  "CheckInOutHistoryReport",
   checkInOutHistoryReportSchema
 );
 

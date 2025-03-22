@@ -10,9 +10,9 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 
 // Check-in route
 router.post("/checkin", authMiddleware, checkInController);
-
+a;
 // Check-out route
-router.post("/checkout", authMiddleware, checkOutController);
+router.put("/checkout", authMiddleware, checkOutController);
 
 // Get attendance records by employee ID
 router.get("/:employeeId", authMiddleware, getAttendanceRecordsController);

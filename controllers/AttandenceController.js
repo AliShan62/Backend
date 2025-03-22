@@ -137,7 +137,7 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
-      data: newAttendance,
+      // data: newAttendance,
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);

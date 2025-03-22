@@ -65,8 +65,7 @@ const checkInController = async (req, res) => {
     }
 
     // Find the employee by uniqueKey
-    const employee = await Employee.findOne(
-      { uniqueKey },
+    const employee = await Employee.findOne({ uniqueKey }).select(
       "firstName lastName branch uniqueKey"
     );
 
@@ -90,6 +89,7 @@ const checkInController = async (req, res) => {
       return res.status(200).json({
         message: "✅ Already checked in for today.",
         success: true,
+        attendance: existingAttendance, // Send existing record for reference
       });
     }
 
@@ -100,7 +100,7 @@ const checkInController = async (req, res) => {
       lastName: employee.lastName,
       branch: employee.branch,
       checkIn: new Date(),
-      status: "Success",
+      status: "Pending", // Status remains "Pending" until check-out
       date: today,
     });
 
@@ -109,12 +109,14 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
+      attendance: newAttendance, // Return the newly created attendance
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);
     res.status(500).json({
       message: "❌ An error occurred during check-in.",
       success: false,
+      error: error.message,
     });
   }
 };

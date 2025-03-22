@@ -54,13 +54,13 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    console.log("🔍 Received Query Params:", req.query); // Debugging log
+    console.log("Received Query Params:", req.query); // Debugging log
 
     let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
 
     if (!uniqueKey) {
       return res.status(400).json({
-        message: "❌ Unique Key is required.",
+        message: "Unique Key is required.",
         success: false,
       });
     }
@@ -70,7 +70,7 @@ const checkInController = async (req, res) => {
 
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({
-        message: "❌ Latitude and Longitude must be valid numbers.",
+        message: "Latitude and Longitude must be valid numbers.",
         success: false,
       });
     }
@@ -83,12 +83,12 @@ const checkInController = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "❌ Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
         success: false,
       });
     }
 
-    console.log("🔍 Checking Employee Record...");
+    console.log("Checking Employee Record...");
     const employee = await Employee.findOne(
       { uniqueKey },
       "firstName lastName branch"
@@ -96,28 +96,14 @@ const checkInController = async (req, res) => {
 
     if (!employee) {
       return res.status(404).json({
-        message: "❌ Employee not found.",
+        message: "Employee not found.",
         success: false,
       });
     }
 
     const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
 
-    console.log("🔍 Checking Existing Attendance for:", todayDate);
-    const existingAttendance = await Attendance.findOne({
-      uniqueKey,
-      date: todayDate,
-    });
-
-    if (existingAttendance) {
-      return res.status(409).json({
-        message: "✅ You have already checked in today.",
-        success: true,
-        data: existingAttendance,
-      });
-    }
-
-    console.log("✅ Creating New Attendance Record...");
+    console.log("Creating New Attendance Record...");
     const newAttendance = new Attendance({
       uniqueKey,
       firstName: employee.firstName,
@@ -133,18 +119,16 @@ const checkInController = async (req, res) => {
 
     await newAttendance.save();
 
-    console.log("✅ Check-in Successful!");
+    console.log("Check-in Successful!");
     res.status(201).json({
-      message: "✅ Check-in successful.",
+      message: "Check-in successful.",
       success: true,
-      // data: newAttendance,
     });
   } catch (error) {
-    console.error("❌ Check-In Error:", error);
+    console.error("Check-In Error:", error);
     res.status(500).json({
-      message: "❌ An error occurred during check-in.",
+      message: "An error occurred during check-in.",
       success: false,
-      error: error.message,
     });
   }
 };

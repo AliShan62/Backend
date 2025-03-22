@@ -191,29 +191,24 @@ const checkInController = async (req, res) => {
 
 const checkOutController = async (req, res) => {
   try {
-    const { uniqueKey } = req.params; // Take uniqueKey from URL parameters
+    const { uniqueKey } = req.body; // Ensure check-out is based on uniqueKey
 
     // Find today's attendance record using uniqueKey
     const attendance = await Attendance.findOne({ uniqueKey });
 
-    if (!attendance) {
-      return res.status(404).json({
-        message: "No attendance record found.",
-        success: false,
-      });
-    }
-
-    if (!attendance.checkIn) {
+    // If no attendance record is found
+    if (!attendance || !attendance.checkIn) {
       return res.status(400).json({
-        message: "Check-in record is missing.",
-        success: false,
+        message: "No check-in record found for today.",
+        status: "Pending",
       });
     }
 
+    // If already checked out
     if (attendance.checkOut !== "Pending") {
       return res.status(400).json({
         message: "Already checked out for today.",
-        success: false,
+        status: "Success",
       });
     }
 
@@ -223,23 +218,23 @@ const checkOutController = async (req, res) => {
       (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
     attendance.status = "Success"; // Mark check-out as successful
 
+    // Save updated attendance record
     await attendance.save();
 
-    // Update total hours in employee profile (if employeeId exists)
-    if (attendance.employeeId) {
-      const employee = await Employee.findById(attendance.employeeId);
-      if (employee) {
-        employee.totalHours += attendance.totalHours;
-        await employee.save();
-      }
+    // Update total hours in employee profile
+    const employee = await Employee.findById(attendance.employeeId);
+    if (employee) {
+      employee.totalHours += attendance.totalHours;
+      await employee.save();
     }
 
+    // Respond with minimal success message
     res.status(200).json({
       message: "Check-out successful.",
       status: "Success",
     });
   } catch (error) {
-    console.error("Check-Out Error:", error.message, error.stack);
+    console.error("Check-Out Error:", error);
     res.status(500).json({
       message: "An error occurred during check-out.",
       success: false,

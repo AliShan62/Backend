@@ -37,6 +37,8 @@ const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1]; // Extract Bearer Token
     const { uniqueKey } = req.body; // Extract uniqueKey from body
 
+    console.log("Token received:", req.headers.authorization);
+
     if (!token) {
       return res.status(401).send({
         message: "Token missing",

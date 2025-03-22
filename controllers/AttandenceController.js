@@ -193,16 +193,8 @@ const checkOutController = async (req, res) => {
   try {
     const { uniqueKey } = req.params; // Take uniqueKey from URL parameters
 
-    // Find today's attendance record using uniqueKey
+    // Find attendance record using uniqueKey
     const attendance = await Attendance.findOne({ uniqueKey });
-
-    // If no attendance record is found
-    if (!attendance || !attendance.checkIn) {
-      return res.status(400).json({
-        message: "No check-in record found for today.",
-        status: "Pending",
-      });
-    }
 
     // Update check-out time and calculate total hours worked
     attendance.checkOut = new Date();

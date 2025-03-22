@@ -81,6 +81,8 @@ const checkInController = async (req, res) => {
     // Find existing attendance for the employee on the same day
     let attendance = await Attendance.findOne({
       uniqueKey,
+      latitude,
+      longitude,
       date: new Date().toISOString().split("T")[0], // Match today's date
     });
 

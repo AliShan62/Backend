@@ -88,7 +88,6 @@ const checkInController = async (req, res) => {
       return res.json({
         message: "✅ Already checked in for today.",
         success: true,
-        attendance,
       });
     }
 
@@ -176,15 +175,12 @@ const checkInController = async (req, res) => {
 
 const checkOutController = async (req, res) => {
   try {
-    const { employeeId } = req.body;
+    const { uniqueKey } = req.body; // Ensure check-out is based on uniqueKey
 
-    // Find today's attendance record
-    const attendance = await Attendance.findOne({
-      employeeId,
-      date: new Date().toISOString().split("T")[0], // Match only the date part
-    });
+    // Find today's attendance record using uniqueKey
+    const attendance = await Attendance.findOne({ uniqueKey });
 
-    // If no attendance record found
+    // If no attendance record is found
     if (!attendance || !attendance.checkIn) {
       return res.status(400).json({
         message: "No check-in record found for today.",
@@ -192,7 +188,7 @@ const checkOutController = async (req, res) => {
       });
     }
 
-    // If the employee has already checked out
+    // If already checked out
     if (attendance.checkOut !== "Pending") {
       return res.status(400).json({
         message: "Already checked out for today.",
@@ -202,66 +198,27 @@ const checkOutController = async (req, res) => {
 
     // Update check-out time and calculate total hours worked
     attendance.checkOut = new Date();
-    const hoursWorked =
+    attendance.totalHours =
       (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
-    attendance.totalHours = hoursWorked;
-    attendance.status = "Success"; // Update status after check-out
+    attendance.status = "Success"; // Mark check-out as successful
 
     // Save updated attendance record
     await attendance.save();
 
-    // Fetch employee details
-    const employee = await Employee.findById(employeeId);
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found.",
-        success: false,
-      });
+    // Update total hours in employee profile
+    const employee = await Employee.findById(attendance.employeeId);
+    if (employee) {
+      employee.totalHours += attendance.totalHours;
+      await employee.save();
     }
 
-    // Update the total hours in the employee profile
-    employee.totalHours += hoursWorked;
-
-    // Standard work hours (e.g., 8 hours/day)
-    const standardWorkHours = 8;
-
-    // Calculate overtime if applicable
-    if (hoursWorked > standardWorkHours) {
-      const overtimeHours = hoursWorked - standardWorkHours;
-
-      // Calculate daily rate for salaried employees
-      const dailyRate = employee.salaryBased ? employee.salary / 30 : 0;
-
-      // Calculate overtime payment
-      const overtimePayment = employee.salaryBased
-        ? (dailyRate / standardWorkHours) * overtimeHours
-        : employee.hourlyWages * overtimeHours;
-
-      // Add overtime payment to totalSalary
-      employee.totalSalary += overtimePayment;
-    }
-
-    // Recalculate total salary for hourly-based employees
-    if (!employee.salaryBased) {
-      employee.totalSalary = employee.hourlyWages * employee.totalHours;
-    }
-
-    // Save updated employee details
-    await employee.save();
-
-    // Respond with success
+    // Respond with minimal success message
     res.status(200).json({
-      message: "Check-out successful. Overtime calculated if applicable.",
+      message: "Check-out successful.",
       status: "Success",
-      attendance,
-      employee,
     });
   } catch (error) {
-    // Log error details for debugging
     console.error("Check-Out Error:", error);
-
-    // Respond with error message
     res.status(500).json({
       message: "An error occurred during check-out.",
       success: false,

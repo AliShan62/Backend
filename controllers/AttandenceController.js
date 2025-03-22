@@ -54,7 +54,7 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    const { uniqueKey, latitude, longitude } = req.body; // Get uniqueKey and location
+    const { uniqueKey } = req.body;
 
     // Validate input
     if (!uniqueKey) {
@@ -64,17 +64,10 @@ const checkInController = async (req, res) => {
       });
     }
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({
-        message: "❌ Latitude and Longitude are required.",
-        success: false,
-      });
-    }
-
     // Find the employee using uniqueKey
-    let employee = await Employee.findOne(
+    const employee = await Employee.findOne(
       { uniqueKey },
-      "firstName lastName branch location"
+      "firstName lastName branch"
     );
 
     // Check if employee exists
@@ -98,11 +91,6 @@ const checkInController = async (req, res) => {
       });
     }
 
-    // Update employee's location with check-in coordinates
-    employee.location.lat = latitude;
-    employee.location.lng = longitude;
-    await employee.save(); // Save updated location
-
     // Create a new check-in record
     attendance = new Attendance({
       uniqueKey,
@@ -110,10 +98,6 @@ const checkInController = async (req, res) => {
       lastName: employee.lastName,
       branch: employee.branch,
       checkIn: new Date(),
-      location: {
-        lat: latitude,
-        lng: longitude,
-      },
       status: "Pending",
       date: new Date().toISOString().split("T")[0], // Store only the date part
     });
@@ -121,9 +105,8 @@ const checkInController = async (req, res) => {
     await attendance.save();
 
     res.json({
-      message: "✅ Check-in successful, location updated.",
+      message: "✅ Check-in successful.",
       success: true,
-      attendance,
     });
   } catch (error) {
     console.error("Check-In Error:", error);
@@ -192,22 +175,12 @@ const checkInController = async (req, res) => {
 
 const checkOutController = async (req, res) => {
   try {
-    const { uniqueKey } = req.body;
+    const { uniqueKey } = req.body; // Ensure check-out is based on uniqueKey
 
-    // Validate uniqueKey
-    if (!uniqueKey) {
-      return res.status(400).json({
-        message: "❌ Unique Key is required.",
-        success: false,
-      });
-    }
+    // Find today's attendance record using uniqueKey
+    const attendance = await Attendance.findOne({ uniqueKey });
 
-    // Find today's attendance using uniqueKey
-    const attendance = await Attendance.findOne({
-      uniqueKey,
-      date: new Date().toISOString().split("T")[0],
-    });
-
+    // If no attendance record is found
     if (!attendance || !attendance.checkIn) {
       return res.status(400).json({
         message: "No check-in record found for today.",
@@ -215,6 +188,7 @@ const checkOutController = async (req, res) => {
       });
     }
 
+    // If already checked out
     if (attendance.checkOut !== "Pending") {
       return res.status(400).json({
         message: "Already checked out for today.",
@@ -225,19 +199,28 @@ const checkOutController = async (req, res) => {
     // Update check-out time and calculate total hours worked
     attendance.checkOut = new Date();
     attendance.totalHours =
-      (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
-    attendance.status = "Success";
+      (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60); // Convert milliseconds to hours
+    attendance.status = "Success"; // Mark check-out as successful
 
+    // Save updated attendance record
     await attendance.save();
 
+    // Update total hours in employee profile
+    const employee = await Employee.findById(attendance.employeeId);
+    if (employee) {
+      employee.totalHours += attendance.totalHours;
+      await employee.save();
+    }
+
+    // Respond with minimal success message
     res.status(200).json({
-      message: "✅ Check-out successful.",
+      message: "Check-out successful.",
       status: "Success",
     });
   } catch (error) {
     console.error("Check-Out Error:", error);
     res.status(500).json({
-      message: "❌ An error occurred during check-out.",
+      message: "An error occurred during check-out.",
       success: false,
     });
   }

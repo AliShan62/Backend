@@ -188,11 +188,12 @@ const checkInController = async (req, res) => {
 //         });
 //     }
 // };
+
 const checkOutController = async (req, res) => {
   try {
-    console.log("Received Params:", req.params); // Debugging log
+    console.log("Received Query Params:", req.query); // Debugging log
 
-    const { uniqueKey } = req.params; // Extract uniqueKey from URL parameters
+    const { uniqueKey } = req.query; // Extract uniqueKey from query parameters
 
     if (!uniqueKey) {
       return res.status(400).json({

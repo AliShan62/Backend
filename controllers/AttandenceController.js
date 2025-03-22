@@ -54,7 +54,7 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    let { uniqueKey, latitude, longitude } = req.params; // Get data from URL params
+    let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
 
     // Trim uniqueKey and validate inputs
     uniqueKey = uniqueKey?.trim();
@@ -114,6 +114,7 @@ const checkInController = async (req, res) => {
       return res.status(409).json({
         message: "✅ You have already checked in today.",
         success: true,
+        data: existingAttendance,
       });
     }
 
@@ -136,6 +137,7 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "✅ Check-in successful.",
       success: true,
+      data: newAttendance,
     });
   } catch (error) {
     console.error("❌ Check-In Error:", error);

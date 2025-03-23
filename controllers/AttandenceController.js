@@ -203,7 +203,7 @@ const Employee = require("../models/Employee");
 
 const checkInController = async (req, res) => {
   try {
-    console.log("Received Params:", req.params);
+    console.log("Received Params:", req.query);
 
     const { uniqueKey } = req.params; // Extract from URL params
 

@@ -201,6 +201,77 @@ const Employee = require("../models/Employee");
 //   }
 // };
 
+// const checkInController = async (req, res) => {
+//   try {
+//     console.log("Received Query Params:", req.query);
+
+//     let { uniqueKey } = req.query; // ✅ Extract from req.query
+
+//     if (!uniqueKey) {
+//       return res.status(400).json({
+//         message: "Unique Key is required.",
+//         success: false,
+//       });
+//     }
+
+//     const employee = await Employee.findOne(
+//       { uniqueKey },
+//       "firstName lastName branch"
+//     );
+
+//     if (!employee) {
+//       return res.status(404).json({
+//         message: "Employee not found.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Checking if already checked in...");
+//     let existingAttendance = await Attendance.findOne({
+//       uniqueKey,
+//       checkOut: null, // ✅ Ensure check-out is not already done
+//     });
+
+//     if (existingAttendance) {
+//       return res.status(400).json({
+//         message: "Employee has already checked in.",
+//         success: false,
+//         checkInId: existingAttendance._id, // ✅ Return existing check-in ID
+//       });
+//     }
+
+//     console.log("Creating New Attendance Record...");
+//     const todayDate = new Date().toISOString().split("T")[0];
+
+//     const newAttendance = new Attendance({
+//       uniqueKey,
+//       firstName: employee.firstName,
+//       lastName: employee.lastName,
+//       branch: employee.branch,
+//       checkIn: Date.now(),
+//       checkOut: null,
+//       status: "Pending",
+//       date: todayDate,
+//     });
+
+//     await newAttendance.save();
+
+//     console.log("Check-in Successful!");
+//     res.status(201).json({
+//       message: "Check-in successful.",
+//       success: true,
+//       checkInId: newAttendance._id, // ✅ Return unique check-in ID
+//     });
+//   } catch (error) {
+//     console.error("Check-In Error:", error);
+//     res.status(500).json({
+//       message: "An error occurred during check-in.",
+//       success: false,
+//       error: error.message,
+//     });
+//   }
+// };
+
 const checkInController = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query);
@@ -223,20 +294,6 @@ const checkInController = async (req, res) => {
       return res.status(404).json({
         message: "Employee not found.",
         success: false,
-      });
-    }
-
-    console.log("Checking if already checked in...");
-    let existingAttendance = await Attendance.findOne({
-      uniqueKey,
-      checkOut: null, // ✅ Ensure check-out is not already done
-    });
-
-    if (existingAttendance) {
-      return res.status(400).json({
-        message: "Employee has already checked in.",
-        success: false,
-        checkInId: existingAttendance._id, // ✅ Return existing check-in ID
       });
     }
 

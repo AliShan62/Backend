@@ -776,14 +776,6 @@ const checkOutController = async (req, res) => {
       });
     }
 
-    if (attendance.checkOut) {
-      return res.status(400).json({
-        message: "Employee has already checked out.",
-        success: false,
-        checkOutTime: attendance.checkOut,
-      });
-    }
-
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
     attendance.checkOutLatitude = latitude;
@@ -800,15 +792,6 @@ const checkOutController = async (req, res) => {
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
-      // checkInId: attendance._id,
-      // uniqueKey: attendance.uniqueKey,
-      // checkIn: attendance.checkIn,
-      // checkOut: attendance.checkOut,
-      // checkInLatitude: attendance.checkInLatitude,
-      // checkInLongitude: attendance.checkInLongitude,
-      // checkOutLatitude: attendance.checkOutLatitude,
-      // checkOutLongitude: attendance.checkOutLongitude,
-      // totalHours: attendance.totalHours,
     });
   } catch (error) {
     console.error("❌ Check-Out Error:", error);

@@ -569,18 +569,21 @@ const checkOutController = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query);
 
-    let { checkInId } = req.query; // ✅ Extract Check-In ID from query params
+    const { checkInId } = req.query; // ✅ Extract Check-In ID
 
     if (!checkInId) {
+      console.log("❌ Check-In ID Missing");
       return res.status(400).json({
         message: "Check-In ID is required for check-out.",
         success: false,
       });
     }
 
+    console.log(`🔍 Searching for Attendance Record with ID: ${checkInId}`);
     const attendanceRecord = await Attendance.findById(checkInId);
 
     if (!attendanceRecord) {
+      console.log("❌ Attendance Record Not Found");
       return res.status(404).json({
         message: "Attendance record not found.",
         success: false,
@@ -588,6 +591,7 @@ const checkOutController = async (req, res) => {
     }
 
     if (attendanceRecord.checkOut) {
+      console.log("⚠️ Already Checked Out at:", attendanceRecord.checkOut);
       return res.status(400).json({
         message: "Employee has already checked out.",
         success: false,
@@ -595,19 +599,21 @@ const checkOutController = async (req, res) => {
       });
     }
 
+    // ✅ Perform Check-Out
     attendanceRecord.checkOut = Date.now();
-    attendanceRecord.status = "Checked Out"; // ✅ Update Status
+    attendanceRecord.status = "Checked Out";
 
     await attendanceRecord.save();
 
-    console.log("Check-out Successful!");
+    console.log("✅ Check-Out Successful!");
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
       checkOutTime: attendanceRecord.checkOut,
+      checkInId: attendanceRecord._id,
     });
   } catch (error) {
-    console.error("Check-Out Error:", error);
+    console.error("❌ Check-Out Error:", error);
     res.status(500).json({
       message: "An error occurred during check-out.",
       success: false,

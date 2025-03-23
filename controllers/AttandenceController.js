@@ -644,17 +644,17 @@ const GetCurrentLocation = async (req, res) => {
     res.status(200).json({
       message: "✅ Location updated successfully.",
       success: true,
-      data: {
-        uniqueKey,
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        branch: employee.branch,
-        latestLocation: {
-          latitude,
-          longitude,
-        },
-        locations: existingAttendance.locations, // ✅ Return all stored locations
-      },
+      // data: {
+      //   uniqueKey,
+      //   firstName: employee.firstName,
+      //   lastName: employee.lastName,
+      //   branch: employee.branch,
+      //   latestLocation: {
+      //     latitude,
+      //     longitude,
+      //   },
+      //   locations: existingAttendance.locations, // ✅ Return all stored locations
+      // },
     });
   } catch (error) {
     console.error("❌ Current Location Error:", error);

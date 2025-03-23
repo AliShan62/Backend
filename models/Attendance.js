@@ -8,7 +8,7 @@ const attendanceSchema = new mongoose.Schema(
     },
     firstName: {
       type: String,
-      required: [true, "❌ First Name is required."], // Fixed typo
+      required: [true, "❌ First Name is required."],
     },
     lastName: {
       type: String,
@@ -22,15 +22,25 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    checkInLatitude: {
+      type: Number,
+      required: [true, "❌ Check-In Latitude is required."],
+    },
+    checkInLongitude: {
+      type: Number,
+      required: [true, "❌ Check-In Longitude is required."],
+    },
     checkOut: {
-      type: mongoose.Schema.Types.Mixed,
-      default: "Pending",
-      validate: {
-        validator: function (value) {
-          return value === "Pending" || value instanceof Date;
-        },
-        message: '❌ CheckOut must be a date or "Pending".',
-      },
+      type: Date,
+      default: null, // ✅ Changed from "Pending" to null
+    },
+    checkOutLatitude: {
+      type: Number,
+      default: null, // ✅ Added check-out latitude
+    },
+    checkOutLongitude: {
+      type: Number,
+      default: null, // ✅ Added check-out longitude
     },
     totalHours: {
       type: Number,
@@ -51,28 +61,20 @@ const attendanceSchema = new mongoose.Schema(
         message: "❌ Date must be in the format YYYY-MM-DD.",
       },
     },
-    latitude: {
-      type: Number,
-      required: [true, "❌ Latitude is required."],
-    },
-    longitude: {
-      type: Number,
-      required: [true, "❌ Longitude is required."],
-    },
   },
   { timestamps: true }
 );
 
 // ✅ Automatically calculates total hours before saving
 attendanceSchema.pre("save", function (next) {
-  if (this.checkIn && this.checkOut instanceof Date) {
+  if (this.checkIn && this.checkOut) {
     const diffInMs = this.checkOut - this.checkIn;
-    this.totalHours = Math.max(0, Math.round(diffInMs / (1000 * 60 * 60))); // Ensures non-negative hours
+    this.totalHours = Math.max(0, (diffInMs / (1000 * 60 * 60)).toFixed(2)); // ✅ Fixed total hours calculation
   }
   next();
 });
 
-// Create the Attendance model
+// ✅ Create the Attendance model
 const Attendance = mongoose.model("Attendance", attendanceSchema);
 
 module.exports = Attendance;

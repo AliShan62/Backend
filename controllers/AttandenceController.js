@@ -245,9 +245,10 @@ const checkInController = async (req, res) => {
 //     });
 //   }
 // };
+
 const checkOutController = async (req, res) => {
   try {
-    console.log("Received Query Params:", req.query);
+    console.log("Received Query Params:", req.query); // Debugging log
 
     let { uniqueKey, latitude, longitude } = req.query;
 
@@ -298,16 +299,12 @@ const checkOutController = async (req, res) => {
 
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
-    attendance.checkOutLatitude = latitude;
-    attendance.checkOutLongitude = longitude;
-
-    if (attendance.checkIn) {
-      attendance.totalHours =
-        (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
-    } else {
-      attendance.totalHours = 0; // Allow checkout even if check-in is missing
-    }
-
+    attendance.checkOutLatitude = latitude; // Save check-out latitude
+    attendance.checkOutLongitude = longitude; // Save check-out longitude
+    attendance.totalHours = (
+      (attendance.checkOut - new Date(attendance.checkIn)) /
+      (1000 * 60 * 60)
+    ).toFixed(2);
     attendance.status = "Success";
 
     await attendance.save();
@@ -318,13 +315,13 @@ const checkOutController = async (req, res) => {
       success: true,
       data: {
         uniqueKey,
-        checkIn: attendance.checkIn || "No check-in recorded",
+        checkIn: attendance.checkIn,
         checkOut: attendance.checkOut,
-        checkInLatitude: attendance.latitude || "N/A",
-        checkInLongitude: attendance.longitude || "N/A",
-        checkOutLatitude: attendance.checkOutLatitude,
-        checkOutLongitude: attendance.checkOutLongitude,
-        totalHours: attendance.totalHours.toFixed(2),
+        checkInLatitude: attendance.checkInLatitude, // Ensure check-in latitude is preserved
+        checkInLongitude: attendance.checkInLongitude, // Ensure check-in longitude is preserved
+        checkOutLatitude: attendance.checkOutLatitude, // Save separate check-out latitude
+        checkOutLongitude: attendance.checkOutLongitude, // Save separate check-out longitude
+        totalHours: attendance.totalHours,
       },
     });
   } catch (error) {

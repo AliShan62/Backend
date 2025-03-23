@@ -189,15 +189,95 @@ const checkInController = async (req, res) => {
 //     }
 // };
 
+// const checkOutController = async (req, res) => {
+//   try {
+//     console.log("Received Query Params:", req.query); // Debugging log
+
+//     const { uniqueKey } = req.query; // Extract uniqueKey from query parameters
+
+//     if (!uniqueKey) {
+//       return res.status(400).json({
+//         message: "Unique Key is required.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Checking Attendance Record...");
+//     const todayDate = new Date().toISOString().split("T")[0];
+
+//     const attendance = await Attendance.findOne({
+//       uniqueKey,
+//       date: todayDate,
+//     });
+
+//     if (!attendance) {
+//       return res.status(404).json({
+//         message: "No check-in record found for today.",
+//         success: false,
+//       });
+//     }
+
+//     if (attendance.checkOut !== "Pending") {
+//       return res.status(400).json({
+//         message: "You have already checked out today.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Updating Attendance Record...");
+//     attendance.checkOut = new Date();
+//     attendance.totalHours =
+//       (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
+//     attendance.status = "Success";
+
+//     await attendance.save();
+
+//     console.log("Check-out Successful!");
+//     res.status(200).json({
+//       message: "Check-out successful.",
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Check-Out Error:", error);
+//     res.status(500).json({
+//       message: "An error occurred during check-out.",
+//       success: false,
+//     });
+//   }
+// };
+
 const checkOutController = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query); // Debugging log
 
-    const { uniqueKey } = req.query; // Extract uniqueKey from query parameters
+    let { uniqueKey, latitude, longitude } = req.query; // Extract uniqueKey, latitude, and longitude from query parameters
 
     if (!uniqueKey) {
       return res.status(400).json({
         message: "Unique Key is required.",
+        success: false,
+      });
+    }
+
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({
+        message: "Latitude and Longitude must be valid numbers.",
+        success: false,
+      });
+    }
+
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message:
+          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
         success: false,
       });
     }
@@ -217,15 +297,10 @@ const checkOutController = async (req, res) => {
       });
     }
 
-    if (attendance.checkOut !== "Pending") {
-      return res.status(400).json({
-        message: "You have already checked out today.",
-        success: false,
-      });
-    }
-
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
+    attendance.latitude = latitude; // Store check-out latitude
+    attendance.longitude = longitude; // Store check-out longitude
     attendance.totalHours =
       (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
     attendance.status = "Success";

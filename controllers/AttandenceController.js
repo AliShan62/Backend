@@ -52,11 +52,92 @@ const Employee = require("../models/Employee");
 //     }
 // };
 
+// const checkInController = async (req, res) => {
+//   try {
+//     console.log("Received Query Params:", req.query); // Debugging log
+
+//     let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
+
+//     if (!uniqueKey) {
+//       return res.status(400).json({
+//         message: "Unique Key is required.",
+//         success: false,
+//       });
+//     }
+
+//     latitude = parseFloat(latitude);
+//     longitude = parseFloat(longitude);
+
+//     if (isNaN(latitude) || isNaN(longitude)) {
+//       return res.status(400).json({
+//         message: "Latitude and Longitude must be valid numbers.",
+//         success: false,
+//       });
+//     }
+
+//     if (
+//       latitude < -90 ||
+//       latitude > 90 ||
+//       longitude < -180 ||
+//       longitude > 180
+//     ) {
+//       return res.status(400).json({
+//         message:
+//           "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Checking Employee Record...");
+//     const employee = await Employee.findOne(
+//       { uniqueKey },
+//       "firstName lastName branch"
+//     );
+
+//     if (!employee) {
+//       return res.status(404).json({
+//         message: "Employee not found.",
+//         success: false,
+//       });
+//     }
+
+//     const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
+
+//     console.log("Creating New Attendance Record...");
+//     const newAttendance = new Attendance({
+//       uniqueKey,
+//       firstName: employee.firstName,
+//       lastName: employee.lastName,
+//       branch: employee.branch,
+//       checkIn: new Date(),
+//       checkOut: "Pending",
+//       status: "Pending",
+//       date: todayDate,
+//       latitude,
+//       longitude,
+//     });
+
+//     await newAttendance.save();
+
+//     console.log("Check-in Successful!");
+//     res.status(201).json({
+//       message: "Check-in successful.",
+//       success: true,
+//     });
+//   } catch (error) {
+//     console.error("Check-In Error:", error);
+//     res.status(500).json({
+//       message: "An error occurred during check-in.",
+//       success: false,
+//     });
+//   }
+// };
+
 const checkInController = async (req, res) => {
   try {
-    console.log("Received Query Params:", req.query); // Debugging log
+    console.log("Received Query Params:", req.query);
 
-    let { uniqueKey, latitude, longitude } = req.query; // Extract from query params
+    let { uniqueKey, latitude, longitude } = req.query;
 
     if (!uniqueKey) {
       return res.status(400).json({
@@ -101,7 +182,7 @@ const checkInController = async (req, res) => {
       });
     }
 
-    const todayDate = new Date().toISOString().split("T")[0]; // Get today's date (YYYY-MM-DD)
+    const todayDate = new Date().toISOString().split("T")[0];
 
     console.log("Creating New Attendance Record...");
     const newAttendance = new Attendance({
@@ -109,12 +190,12 @@ const checkInController = async (req, res) => {
       firstName: employee.firstName,
       lastName: employee.lastName,
       branch: employee.branch,
-      checkIn: new Date(),
-      checkOut: "Pending",
+      checkIn: Date.now(),
+      checkOut: null,
       status: "Pending",
       date: todayDate,
-      latitude,
-      longitude,
+      checkInLatitude: latitude,
+      checkInLongitude: longitude,
     });
 
     await newAttendance.save();
@@ -123,12 +204,24 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "Check-in successful.",
       success: true,
+      data: {
+        uniqueKey,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        branch: employee.branch,
+        checkIn: newAttendance.checkIn,
+        checkInLatitude: latitude,
+        checkInLongitude: longitude,
+        status: "Pending",
+        date: todayDate,
+      },
     });
   } catch (error) {
     console.error("Check-In Error:", error);
     res.status(500).json({
       message: "An error occurred during check-in.",
       success: false,
+      error: error.message,
     });
   }
 };

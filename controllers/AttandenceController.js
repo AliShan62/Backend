@@ -642,15 +642,15 @@ const checkOutController = async (req, res) => {
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
-      checkInId: attendance._id,
-      uniqueKey: attendance.uniqueKey,
-      checkIn: attendance.checkIn,
-      checkOut: attendance.checkOut,
-      checkInLatitude: attendance.checkInLatitude,
-      checkInLongitude: attendance.checkInLongitude,
-      checkOutLatitude: attendance.checkOutLatitude,
-      checkOutLongitude: attendance.checkOutLongitude,
-      totalHours: attendance.totalHours,
+      // checkInId: attendance._id,
+      // uniqueKey: attendance.uniqueKey,
+      // checkIn: attendance.checkIn,
+      // checkOut: attendance.checkOut,
+      // checkInLatitude: attendance.checkInLatitude,
+      // checkInLongitude: attendance.checkInLongitude,
+      // checkOutLatitude: attendance.checkOutLatitude,
+      // checkOutLongitude: attendance.checkOutLongitude,
+      // totalHours: attendance.totalHours,
     });
   } catch (error) {
     console.error("❌ Check-Out Error:", error);

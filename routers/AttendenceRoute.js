@@ -5,12 +5,15 @@ const {
   checkInController,
   checkOutController,
   getAttendanceRecordsController,
+  GetCurrentLocation,
 } = require("../controllers/AttandenceController"); // Ensure correct import
 const { authMiddleware } = require("../middleware/authMiddleware");
 
 // Check-in route
 router.post("/checkin", authMiddleware, checkInController);
 
+// Check-in route
+router.post("/currentlocation", authMiddleware, GetCurrentLocation);
 // Check-out route
 router.post("/checkout", authMiddleware, checkOutController);
 

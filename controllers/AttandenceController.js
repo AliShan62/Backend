@@ -604,7 +604,7 @@ const GetCurrentLocation = async (req, res) => {
     }
 
     console.log("🔍 Checking Employee Record...");
-    const employee = await Employee.findOne({ uniqueKey }).lean(); // ✅ Use lean() for performance
+    const employee = await Employee.findOne({ uniqueKey });
 
     if (!employee) {
       return res.status(404).json({
@@ -614,7 +614,10 @@ const GetCurrentLocation = async (req, res) => {
     }
 
     console.log("🔍 Checking Existing Attendance...");
-    let existingAttendance = await Attendance.findOne({ checkInId });
+    const mongoose = require("mongoose");
+    let existingAttendance = await Attendance.findOne({
+      checkInId: mongoose.Types.ObjectId(checkInId), // Convert to ObjectId
+    }).lean();
 
     if (!existingAttendance) {
       return res.status(404).json({

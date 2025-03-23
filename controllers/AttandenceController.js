@@ -245,12 +245,11 @@ const checkInController = async (req, res) => {
 //     });
 //   }
 // };
-
 const checkOutController = async (req, res) => {
   try {
-    console.log("Received Query Params:", req.query); // Debugging log
+    console.log("Received Query Params:", req.query);
 
-    let { uniqueKey, latitude, longitude } = req.query; // Extract uniqueKey, latitude, and longitude from query parameters
+    let { uniqueKey, latitude, longitude } = req.query;
 
     if (!uniqueKey) {
       return res.status(400).json({
@@ -299,14 +298,14 @@ const checkOutController = async (req, res) => {
 
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
-    attendance.checkOutLatitude = latitude; // Store check-out latitude separately
-    attendance.checkOutLongitude = longitude; // Store check-out longitude separately
+    attendance.checkOutLatitude = latitude;
+    attendance.checkOutLongitude = longitude;
 
     if (attendance.checkIn) {
       attendance.totalHours =
         (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
     } else {
-      attendance.totalHours = 0; // If check-in time is missing, set total hours to 0
+      attendance.totalHours = 0; // Allow checkout even if check-in is missing
     }
 
     attendance.status = "Success";
@@ -319,13 +318,13 @@ const checkOutController = async (req, res) => {
       success: true,
       data: {
         uniqueKey,
-        checkIn: attendance.checkIn || "No check-in recorded", // If missing, show a default message
+        checkIn: attendance.checkIn || "No check-in recorded",
         checkOut: attendance.checkOut,
-        checkInLatitude: attendance.latitude || "N/A", // Keep original check-in latitude
-        checkInLongitude: attendance.longitude || "N/A", // Keep original check-in longitude
-        checkOutLatitude: attendance.checkOutLatitude, // Separate field for check-out
-        checkOutLongitude: attendance.checkOutLongitude, // Separate field for check-out
-        totalHours: attendance.totalHours.toFixed(2), // Round off to 2 decimal places
+        checkInLatitude: attendance.latitude || "N/A",
+        checkInLongitude: attendance.longitude || "N/A",
+        checkOutLatitude: attendance.checkOutLatitude,
+        checkOutLongitude: attendance.checkOutLongitude,
+        totalHours: attendance.totalHours.toFixed(2),
       },
     });
   } catch (error) {

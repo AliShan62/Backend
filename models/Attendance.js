@@ -22,14 +22,6 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    checkInLatitude: {
-      type: Number,
-      default: null,
-    },
-    checkInLongitude: {
-      type: Number,
-      default: null,
-    },
     checkOut: {
       type: Date,
       default: null,

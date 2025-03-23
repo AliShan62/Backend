@@ -565,18 +565,16 @@ const checkInController = async (req, res) => {
 //   }
 // };
 
-const mongoose = require("mongoose");
-
 const GetCurrentLocation = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query);
 
-    let { checkInId, uniqueKey, latitude, longitude } = req.query;
+    let { uniqueKey, latitude, longitude } = req.query;
 
     // ✅ Validate required fields
-    if (!checkInId || !uniqueKey) {
+    if (!uniqueKey) {
       return res.status(400).json({
-        message: "❌ CheckInId and Unique Key are required.",
+        message: "❌ Unique Key is required.",
         success: false,
       });
     }
@@ -616,16 +614,13 @@ const GetCurrentLocation = async (req, res) => {
     }
 
     console.log("🔍 Checking Existing Attendance...");
+    let existingAttendance = await Attendance.findOne({ uniqueKey });
 
-    // Use 'new mongoose.Types.ObjectId(checkInId)' to convert to ObjectId
-    let existingAttendance = await Attendance.findOne({
-      checkInId: new mongoose.Types.ObjectId(checkInId), // ✅ Use 'new' keyword here
-    }).lean();
-
+    // If no existing attendance record for the employee, create a new one
     if (!existingAttendance) {
-      return res.status(404).json({
-        message: "❌ No active check-in found.",
-        success: false,
+      existingAttendance = new Attendance({
+        uniqueKey,
+        locations: [],
       });
     }
 
@@ -636,6 +631,7 @@ const GetCurrentLocation = async (req, res) => {
       existingAttendance.locations = [];
     }
 
+    // Push new location data
     existingAttendance.locations.push({
       latitude,
       longitude,
@@ -649,7 +645,6 @@ const GetCurrentLocation = async (req, res) => {
       message: "✅ Location updated successfully.",
       success: true,
       data: {
-        checkInId,
         uniqueKey,
         firstName: employee.firstName,
         lastName: employee.lastName,

@@ -565,6 +565,8 @@ const checkInController = async (req, res) => {
 //   }
 // };
 
+const mongoose = require("mongoose");
+
 const GetCurrentLocation = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query);
@@ -604,7 +606,7 @@ const GetCurrentLocation = async (req, res) => {
     }
 
     console.log("🔍 Checking Employee Record...");
-    const employee = await Employee.findOne({ uniqueKey });
+    const employee = await Employee.findOne({ uniqueKey }).lean(); // ✅ Use lean() for performance
 
     if (!employee) {
       return res.status(404).json({
@@ -614,9 +616,10 @@ const GetCurrentLocation = async (req, res) => {
     }
 
     console.log("🔍 Checking Existing Attendance...");
-    const mongoose = require("mongoose");
+
+    // Use 'new mongoose.Types.ObjectId(checkInId)' to convert to ObjectId
     let existingAttendance = await Attendance.findOne({
-      checkInId: mongoose.Types.ObjectId(checkInId), // Convert to ObjectId
+      checkInId: new mongoose.Types.ObjectId(checkInId), // ✅ Use 'new' keyword here
     }).lean();
 
     if (!existingAttendance) {

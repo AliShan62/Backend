@@ -24,11 +24,13 @@ const attendanceSchema = new mongoose.Schema(
     },
     checkInLatitude: {
       type: Number,
-      required: [true, "❌ Check-In Latitude is required."],
+      required: false, // ❌ Remove "true" to make it optional
+      default: null, // ✅ Properly set the default value
     },
     checkInLongitude: {
       type: Number,
-      required: [true, "❌ Check-In Longitude is required."],
+      required: false, // ❌ Remove "true" to make it optional
+      default: null, // ✅ Properly set the default value
     },
     checkOut: {
       type: Date,

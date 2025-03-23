@@ -250,7 +250,7 @@ const checkOutController = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query); // Debugging log
 
-    let { uniqueKey, latitude, longitude } = req.query; // Extract uniqueKey, latitude, and longitude from query parameters
+    let { uniqueKey, latitude, longitude } = req.query;
 
     if (!uniqueKey) {
       return res.status(400).json({
@@ -285,10 +285,7 @@ const checkOutController = async (req, res) => {
     console.log("Checking Attendance Record...");
     const todayDate = new Date().toISOString().split("T")[0];
 
-    const attendance = await Attendance.findOne({
-      uniqueKey,
-      date: todayDate,
-    });
+    const attendance = await Attendance.findOne({ uniqueKey, date: todayDate });
 
     if (!attendance) {
       return res.status(404).json({
@@ -298,6 +295,16 @@ const checkOutController = async (req, res) => {
     }
 
     console.log("Updating Attendance Record...");
+
+    // Ensure check-in coordinates are already stored
+    if (!attendance.checkInLatitude || !attendance.checkInLongitude) {
+      return res.status(400).json({
+        message:
+          "Check-in location is missing. Cannot check out without a check-in location.",
+        success: false,
+      });
+    }
+
     attendance.checkOut = new Date();
     attendance.checkOutLatitude = latitude; // Store check-out latitude separately
     attendance.checkOutLongitude = longitude; // Store check-out longitude separately
@@ -315,11 +322,11 @@ const checkOutController = async (req, res) => {
         uniqueKey,
         checkIn: attendance.checkIn,
         checkOut: attendance.checkOut,
-        checkInLatitude: attendance.latitude, // Keep original check-in latitude
-        checkInLongitude: attendance.longitude, // Keep original check-in longitude
+        checkInLatitude: attendance.checkInLatitude, // Keep original check-in latitude
+        checkInLongitude: attendance.checkInLongitude, // Keep original check-in longitude
         checkOutLatitude: attendance.checkOutLatitude, // Separate field for check-out
         checkOutLongitude: attendance.checkOutLongitude, // Separate field for check-out
-        totalHours: attendance.totalHours.toFixed(2), // Round off to 2 decimal places
+        totalHours: attendance.totalHours.toFixed(2), // Round to 2 decimal places
       },
     });
   } catch (error) {

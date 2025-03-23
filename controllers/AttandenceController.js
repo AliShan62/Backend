@@ -299,8 +299,8 @@ const checkOutController = async (req, res) => {
 
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
-    attendance.latitude = latitude; // Store check-out latitude
-    attendance.longitude = longitude; // Store check-out longitude
+    attendance.checkOutLatitude = latitude; // Store check-out latitude separately
+    attendance.checkOutLongitude = longitude; // Store check-out longitude separately
     attendance.totalHours =
       (attendance.checkOut - new Date(attendance.checkIn)) / (1000 * 60 * 60);
     attendance.status = "Success";
@@ -311,6 +311,16 @@ const checkOutController = async (req, res) => {
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
+      data: {
+        uniqueKey,
+        checkIn: attendance.checkIn,
+        checkOut: attendance.checkOut,
+        checkInLatitude: attendance.latitude, // Keep original check-in latitude
+        checkInLongitude: attendance.longitude, // Keep original check-in longitude
+        checkOutLatitude: attendance.checkOutLatitude, // Separate field for check-out
+        checkOutLongitude: attendance.checkOutLongitude, // Separate field for check-out
+        totalHours: attendance.totalHours.toFixed(2), // Round off to 2 decimal places
+      },
     });
   } catch (error) {
     console.error("Check-Out Error:", error);

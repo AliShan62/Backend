@@ -64,8 +64,9 @@ const attendanceSchema = new mongoose.Schema(
     checkInId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CheckIn",
-      required: [true, "❌ CheckIn ID is required."],
+      default: null, // ✅ Making it optional
     },
+
     locations: [
       {
         latitude: { type: Number, required: true },

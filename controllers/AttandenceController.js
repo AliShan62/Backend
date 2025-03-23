@@ -571,9 +571,10 @@ const GetCurrentLocation = async (req, res) => {
 
     let { checkInId, uniqueKey, latitude, longitude } = req.query;
 
+    // ✅ Validate required fields
     if (!checkInId || !uniqueKey) {
       return res.status(400).json({
-        message: "CheckInId and Unique Key are required.",
+        message: "❌ CheckInId and Unique Key are required.",
         success: false,
       });
     }
@@ -581,9 +582,10 @@ const GetCurrentLocation = async (req, res) => {
     latitude = parseFloat(latitude);
     longitude = parseFloat(longitude);
 
+    // ✅ Validate latitude and longitude values
     if (isNaN(latitude) || isNaN(longitude)) {
       return res.status(400).json({
-        message: "Latitude and Longitude must be valid numbers.",
+        message: "❌ Latitude and Longitude must be valid numbers.",
         success: false,
       });
     }
@@ -596,36 +598,38 @@ const GetCurrentLocation = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+          "❌ Latitude must be between -90 and 90, and Longitude between -180 and 180.",
         success: false,
       });
     }
 
-    console.log("Checking Employee Record...");
-    const employee = await Employee.findOne(
-      { uniqueKey },
-      "firstName lastName branch"
-    );
+    console.log("🔍 Checking Employee Record...");
+    const employee = await Employee.findOne({ uniqueKey }).lean(); // ✅ Use lean() for performance
 
     if (!employee) {
       return res.status(404).json({
-        message: "Employee not found.",
+        message: "❌ Employee not found.",
         success: false,
       });
     }
 
-    console.log("Checking Existing Attendance...");
+    console.log("🔍 Checking Existing Attendance...");
     let existingAttendance = await Attendance.findOne({ checkInId });
 
     if (!existingAttendance) {
       return res.status(404).json({
-        message: "No active check-in found.",
+        message: "❌ No active check-in found.",
         success: false,
       });
     }
 
-    console.log("Updating Employee Location...");
-    existingAttendance.locations = existingAttendance.locations || [];
+    console.log("📍 Updating Employee Location...");
+
+    // ✅ Ensure locations array exists before pushing new data
+    if (!Array.isArray(existingAttendance.locations)) {
+      existingAttendance.locations = [];
+    }
+
     existingAttendance.locations.push({
       latitude,
       longitude,
@@ -634,9 +638,9 @@ const GetCurrentLocation = async (req, res) => {
 
     await existingAttendance.save();
 
-    console.log("Location Updated Successfully!");
+    console.log("✅ Location Updated Successfully!");
     res.status(200).json({
-      message: "Location updated successfully.",
+      message: "✅ Location updated successfully.",
       success: true,
       data: {
         checkInId,
@@ -648,13 +652,13 @@ const GetCurrentLocation = async (req, res) => {
           latitude,
           longitude,
         },
-        locations: existingAttendance.locations, // Return all stored locations
+        locations: existingAttendance.locations, // ✅ Return all stored locations
       },
     });
   } catch (error) {
-    console.error("Current Location Error:", error);
+    console.error("❌ Current Location Error:", error);
     res.status(500).json({
-      message: "An error occurred while updating location.",
+      message: "❌ An error occurred while updating location.",
       success: false,
       error: error.message,
     });

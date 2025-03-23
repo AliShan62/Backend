@@ -272,98 +272,103 @@ const checkInController = async (req, res) => {
   }
 };
 
-// const GetCurrentLocation = async (req, res) => {
-//   try {
-//     console.log("Received Query Params:", req.query);
+const GetCurrentLocation = async (req, res) => {
+  try {
+    console.log("Received Query Params:", req.query);
 
-//     let { uniqueKey, latitude, longitude } = req.query;
+    let { uniqueKey, latitude, longitude } = req.query;
 
-//     if (!uniqueKey) {
-//       return res.status(400).json({
-//         message: "Unique Key is required.",
-//         success: false,
-//       });
-//     }
+    if (!uniqueKey) {
+      return res.status(400).json({
+        message: "Unique Key is required.",
+        success: false,
+      });
+    }
 
-//     latitude = parseFloat(latitude);
-//     longitude = parseFloat(longitude);
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
 
-//     if (isNaN(latitude) || isNaN(longitude)) {
-//       return res.status(400).json({
-//         message: "Latitude and Longitude must be valid numbers.",
-//         success: false,
-//       });
-//     }
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({
+        message: "Latitude and Longitude must be valid numbers.",
+        success: false,
+      });
+    }
 
-//     if (
-//       latitude < -90 ||
-//       latitude > 90 ||
-//       longitude < -180 ||
-//       longitude > 180
-//     ) {
-//       return res.status(400).json({
-//         message:
-//           "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
-//         success: false,
-//       });
-//     }
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message:
+          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+        success: false,
+      });
+    }
 
-//     console.log("Checking Employee Record...");
-//     const employee = await Employee.findOne(
-//       { uniqueKey },
-//       "firstName lastName branch"
-//     );
+    console.log("Checking Employee Record...");
+    const employee = await Employee.findOne(
+      { uniqueKey },
+      "firstName lastName branch"
+    );
 
-//     if (!employee) {
-//       return res.status(404).json({
-//         message: "Employee not found.",
-//         success: false,
-//       });
-//     }
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee not found.",
+        success: false,
+      });
+    }
 
-//     const todayDate = new Date().toISOString().split("T")[0];
+    const todayDate = new Date().toISOString().split("T")[0];
 
-//     console.log("Creating New Attendance Record...");
-//     const newAttendance = new Attendance({
-//       uniqueKey,
-//       firstName: employee.firstName,
-//       lastName: employee.lastName,
-//       branch: employee.branch,
-//       checkIn: Date.now(),
-//       checkOut: null,
-//       status: "Pending",
-//       date: todayDate,
-//       checkInLatitude: latitude,
-//       checkInLongitude: longitude,
-//     });
+    console.log("Checking Existing Attendance Record...");
+    let attendance = await Attendance.findOne({
+      uniqueKey,
+      date: todayDate,
+    });
 
-//     await newAttendance.save();
+    if (attendance) {
+      // ✅ Return existing checkInId if user already checked in
+      return res.status(200).json({
+        message: "User already checked in.",
+        success: true,
+        checkInId: attendance._id,
+      });
+    }
 
-//     console.log(" Current Get Successful!");
-//     res.status(201).json({
-//       message: "Current Get Successful!.",
-//       success: true,
-//       // data: {
-//       //   uniqueKey,
-//       //   firstName: employee.firstName,
-//       //   lastName: employee.lastName,
-//       //   branch: employee.branch,
-//       //   checkIn: newAttendance.checkIn,
-//       //   checkInLatitude: latitude,
-//       //   checkInLongitude: longitude,
-//       //   status: "Pending",
-//       //   date: todayDate,
-//       // },
-//     });
-//   } catch (error) {
-//     console.error("Current Location Error:", error);
-//     res.status(500).json({
-//       message: "An error occurred during current location.",
-//       success: false,
-//       error: error.message,
-//     });
-//   }
-// };
+    console.log("Creating New Attendance Record...");
+    const newAttendance = new Attendance({
+      uniqueKey,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      branch: employee.branch,
+      checkIn: Date.now(),
+      checkOut: null,
+      status: "Pending",
+      date: todayDate,
+      checkInLatitude: latitude,
+      checkInLongitude: longitude,
+    });
+
+    await newAttendance.save();
+
+    console.log("Current Location Get Successful!");
+    res.status(201).json({
+      message: "Check-in successful.",
+      success: true,
+      checkInId: newAttendance._id, // ✅ Now returning checkInId correctly
+    });
+  } catch (error) {
+    console.error("Current Location Error:", error);
+    res.status(500).json({
+      message: "An error occurred during current location.",
+      success: false,
+      error: error.message,
+    });
+  }
+};
 
 // const checkOutController = async (req, res) => {
 //     try {
@@ -564,104 +569,6 @@ const checkInController = async (req, res) => {
 //     });
 //   }
 // };
-
-const GetCurrentLocation = async (req, res) => {
-  try {
-    console.log("Received Query Params:", req.query);
-
-    let { uniqueKey, latitude, longitude } = req.query;
-
-    if (!uniqueKey) {
-      return res.status(400).json({
-        message: "Unique Key is required.",
-        success: false,
-      });
-    }
-
-    latitude = parseFloat(latitude);
-    longitude = parseFloat(longitude);
-
-    if (isNaN(latitude) || isNaN(longitude)) {
-      return res.status(400).json({
-        message: "Latitude and Longitude must be valid numbers.",
-        success: false,
-      });
-    }
-
-    if (
-      latitude < -90 ||
-      latitude > 90 ||
-      longitude < -180 ||
-      longitude > 180
-    ) {
-      return res.status(400).json({
-        message:
-          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
-        success: false,
-      });
-    }
-
-    console.log("Checking Employee Record...");
-    const employee = await Employee.findOne(
-      { uniqueKey },
-      "firstName lastName branch"
-    );
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found.",
-        success: false,
-      });
-    }
-
-    const todayDate = new Date().toISOString().split("T")[0];
-
-    console.log("Checking Existing Attendance Record...");
-    let attendance = await Attendance.findOne({
-      uniqueKey,
-      date: todayDate,
-    });
-
-    if (attendance) {
-      // ✅ Return existing checkInId if user already checked in
-      return res.status(200).json({
-        message: "User already checked in.",
-        success: true,
-        checkInId: attendance._id,
-      });
-    }
-
-    console.log("Creating New Attendance Record...");
-    const newAttendance = new Attendance({
-      uniqueKey,
-      firstName: employee.firstName,
-      lastName: employee.lastName,
-      branch: employee.branch,
-      checkIn: Date.now(),
-      checkOut: null,
-      status: "Pending",
-      date: todayDate,
-      checkInLatitude: latitude,
-      checkInLongitude: longitude,
-    });
-
-    await newAttendance.save();
-
-    console.log("Current location Get Successful!");
-    res.status(201).json({
-      message: "Check-in successful.",
-      success: true,
-      checkInId: newAttendance._id, // ✅ Returning checkInId
-    });
-  } catch (error) {
-    console.error("Current Location Error:", error);
-    res.status(500).json({
-      message: "An error occurred during current location.",
-      success: false,
-      error: error.message,
-    });
-  }
-};
 
 const checkOutController = async (req, res) => {
   try {

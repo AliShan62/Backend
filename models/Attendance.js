@@ -24,11 +24,11 @@ const attendanceSchema = new mongoose.Schema(
     },
     checkInLatitude: {
       type: Number,
-      default: null, // ✅ Ensuring default is null
+      default: null,
     },
     checkInLongitude: {
       type: Number,
-      default: null, // ✅ Ensuring default is null
+      default: null,
     },
     checkOut: {
       type: Date,
@@ -63,18 +63,25 @@ const attendanceSchema = new mongoose.Schema(
     },
     checkInId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "CheckIn", // ✅ Linking to CheckIn schema
-      default: null,
+      ref: "CheckIn",
+      required: [true, "❌ CheckIn ID is required."],
     },
+    locations: [
+      {
+        latitude: { type: Number, required: true },
+        longitude: { type: Number, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
-// ✅ Automatically calculates total hours before saving
+// 🔹 Automatically calculates total hours before saving
 attendanceSchema.pre("save", function (next) {
   if (this.checkIn && this.checkOut) {
     const diffInMs = this.checkOut - this.checkIn;
-    this.totalHours = parseFloat((diffInMs / (1000 * 60 * 60)).toFixed(2)); // ✅ Ensure it's stored as a number
+    this.totalHours = parseFloat((diffInMs / (1000 * 60 * 60)).toFixed(2));
   }
   next();
 });

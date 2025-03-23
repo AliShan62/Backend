@@ -24,25 +24,23 @@ const attendanceSchema = new mongoose.Schema(
     },
     checkInLatitude: {
       type: Number,
-      required: false, // ❌ Remove "true" to make it optional
-      default: null, // ✅ Properly set the default value
+      default: null, // ✅ Ensuring default is null
     },
     checkInLongitude: {
       type: Number,
-      required: false, // ❌ Remove "true" to make it optional
-      default: null, // ✅ Properly set the default value
+      default: null, // ✅ Ensuring default is null
     },
     checkOut: {
       type: Date,
-      default: null, // ✅ Changed from "Pending" to null
+      default: null,
     },
     checkOutLatitude: {
       type: Number,
-      default: null, // ✅ Added check-out latitude
+      default: null,
     },
     checkOutLongitude: {
       type: Number,
-      default: null, // ✅ Added check-out longitude
+      default: null,
     },
     totalHours: {
       type: Number,
@@ -63,6 +61,11 @@ const attendanceSchema = new mongoose.Schema(
         message: "❌ Date must be in the format YYYY-MM-DD.",
       },
     },
+    checkInId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CheckIn", // ✅ Linking to CheckIn schema
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -71,7 +74,7 @@ const attendanceSchema = new mongoose.Schema(
 attendanceSchema.pre("save", function (next) {
   if (this.checkIn && this.checkOut) {
     const diffInMs = this.checkOut - this.checkIn;
-    this.totalHours = Math.max(0, (diffInMs / (1000 * 60 * 60)).toFixed(2)); // ✅ Fixed total hours calculation
+    this.totalHours = parseFloat((diffInMs / (1000 * 60 * 60)).toFixed(2)); // ✅ Ensure it's stored as a number
   }
   next();
 });

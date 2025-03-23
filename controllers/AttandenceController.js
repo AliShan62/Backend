@@ -616,6 +616,21 @@ const GetCurrentLocation = async (req, res) => {
 
     const todayDate = new Date().toISOString().split("T")[0];
 
+    console.log("Checking Existing Attendance Record...");
+    let attendance = await Attendance.findOne({
+      uniqueKey,
+      date: todayDate,
+    });
+
+    if (attendance) {
+      // ✅ Return existing checkInId if user already checked in
+      return res.status(200).json({
+        message: "User already checked in.",
+        success: true,
+        checkInId: attendance._id,
+      });
+    }
+
     console.log("Creating New Attendance Record...");
     const newAttendance = new Attendance({
       uniqueKey,
@@ -634,7 +649,9 @@ const GetCurrentLocation = async (req, res) => {
 
     console.log("Current location Get Successful!");
     res.status(201).json({
-      checkInId: newAttendance._id, // Only returning checkInId
+      message: "Check-in successful.",
+      success: true,
+      checkInId: newAttendance._id, // ✅ Returning checkInId
     });
   } catch (error) {
     console.error("Current Location Error:", error);

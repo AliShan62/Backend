@@ -204,17 +204,17 @@ const checkInController = async (req, res) => {
     res.status(201).json({
       message: "Check-in successful.",
       success: true,
-      data: {
-        uniqueKey,
-        firstName: employee.firstName,
-        lastName: employee.lastName,
-        branch: employee.branch,
-        checkIn: newAttendance.checkIn,
-        checkInLatitude: latitude,
-        checkInLongitude: longitude,
-        status: "Pending",
-        date: todayDate,
-      },
+      // data: {
+      //   uniqueKey,
+      //   firstName: employee.firstName,
+      //   lastName: employee.lastName,
+      //   branch: employee.branch,
+      //   checkIn: newAttendance.checkIn,
+      //   checkInLatitude: latitude,
+      //   checkInLongitude: longitude,
+      //   status: "Pending",
+      //   date: todayDate,
+      // },
     });
   } catch (error) {
     console.error("Check-In Error:", error);

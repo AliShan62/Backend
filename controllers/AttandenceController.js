@@ -478,146 +478,89 @@ const GetCurrentLocation = async (req, res) => {
 //   }
 // };
 
-// const checkOutController = async (req, res) => {
-//   try {
-//     console.log("Received Query Params:", req.query); // Debugging log
-
-//     let { uniqueKey, latitude, longitude } = req.query;
-
-//     if (!uniqueKey) {
-//       return res.status(400).json({
-//         message: "Unique Key is required.",
-//         success: false,
-//       });
-//     }
-
-//     latitude = parseFloat(latitude);
-//     longitude = parseFloat(longitude);
-
-//     if (isNaN(latitude) || isNaN(longitude)) {
-//       return res.status(400).json({
-//         message: "Latitude and Longitude must be valid numbers.",
-//         success: false,
-//       });
-//     }
-
-//     if (
-//       latitude < -90 ||
-//       latitude > 90 ||
-//       longitude < -180 ||
-//       longitude > 180
-//     ) {
-//       return res.status(400).json({
-//         message:
-//           "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
-//         success: false,
-//       });
-//     }
-
-//     console.log("Checking Attendance Record...");
-//     const todayDate = new Date().toISOString().split("T")[0];
-
-//     const attendance = await Attendance.findOne({
-//       uniqueKey,
-//       date: todayDate,
-//     });
-
-//     if (!attendance) {
-//       return res.status(404).json({
-//         message: "No check-in record found for today.",
-//         success: false,
-//       });
-//     }
-
-//     console.log("Updating Attendance Record...");
-//     attendance.checkOut = new Date();
-//     attendance.checkOutLatitude = latitude; // Save check-out latitude
-//     attendance.checkOutLongitude = longitude; // Save check-out longitude
-//     attendance.totalHours = (
-//       (attendance.checkOut - new Date(attendance.checkIn)) /
-//       (1000 * 60 * 60)
-//     ).toFixed(2);
-//     attendance.status = "Success";
-
-//     await attendance.save();
-
-//     console.log("Check-out Successful!");
-//     res.status(200).json({
-//       message: "Check-out successful.",
-//       success: true,
-//       // data: {
-//       //   uniqueKey,
-//       //   checkIn: attendance.checkIn,
-//       //   checkOut: attendance.checkOut,
-//       //   checkInLatitude: attendance.checkInLatitude, // Ensure check-in latitude is preserved
-//       //   checkInLongitude: attendance.checkInLongitude, // Ensure check-in longitude is preserved
-//       //   checkOutLatitude: attendance.checkOutLatitude, // Save separate check-out latitude
-//       //   checkOutLongitude: attendance.checkOutLongitude, // Save separate check-out longitude
-//       //   totalHours: attendance.totalHours,
-//       // },
-//     });
-//   } catch (error) {
-//     console.error("Check-Out Error:", error);
-//     res.status(500).json({
-//       message: "An error occurred during check-out.",
-//       success: false,
-//     });
-//   }
-// };
-
 const checkOutController = async (req, res) => {
   try {
-    console.log("Received Query Params:", req.query);
+    console.log("Received Query Params:", req.query); // Debugging log
 
-    const { checkInId } = req.query; // ✅ Extract Check-In ID
+    let { uniqueKey, latitude, longitude } = req.query;
 
-    if (!checkInId) {
-      console.log("❌ Check-In ID Missing");
+    if (!uniqueKey) {
       return res.status(400).json({
-        message: "Check-In ID is required for check-out.",
+        message: "Unique Key is required.",
         success: false,
       });
     }
 
-    console.log(`🔍 Searching for Attendance Record with ID: ${checkInId}`);
-    const attendanceRecord = await Attendance.findById(checkInId);
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
 
-    if (!attendanceRecord) {
-      console.log("❌ Attendance Record Not Found");
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({
+        message: "Latitude and Longitude must be valid numbers.",
+        success: false,
+      });
+    }
+
+    if (
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return res.status(400).json({
+        message:
+          "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+        success: false,
+      });
+    }
+
+    console.log("Checking Attendance Record...");
+    const todayDate = new Date().toISOString().split("T")[0];
+
+    const attendance = await Attendance.findOne({
+      uniqueKey,
+      date: todayDate,
+    });
+
+    if (!attendance) {
       return res.status(404).json({
-        message: "Attendance record not found.",
+        message: "No check-in record found for today.",
         success: false,
       });
     }
 
-    if (attendanceRecord.checkOut) {
-      console.log("⚠️ Already Checked Out at:", attendanceRecord.checkOut);
-      return res.status(400).json({
-        message: "Employee has already checked out.",
-        success: false,
-        checkOutTime: attendanceRecord.checkOut,
-      });
-    }
+    console.log("Updating Attendance Record...");
+    attendance.checkOut = new Date();
+    attendance.checkOutLatitude = latitude; // Save check-out latitude
+    attendance.checkOutLongitude = longitude; // Save check-out longitude
+    attendance.totalHours = (
+      (attendance.checkOut - new Date(attendance.checkIn)) /
+      (1000 * 60 * 60)
+    ).toFixed(2);
+    attendance.status = "Success";
 
-    // ✅ Perform Check-Out
-    attendanceRecord.checkOut = Date.now();
-    attendanceRecord.status = "Checked Out";
+    await attendance.save();
 
-    await attendanceRecord.save();
-
-    console.log("✅ Check-Out Successful!");
+    console.log("Check-out Successful!");
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
-      checkOutTime: attendanceRecord.checkOut,
-      checkInId: attendanceRecord._id,
+      // data: {
+      //   uniqueKey,
+      //   checkIn: attendance.checkIn,
+      //   checkOut: attendance.checkOut,
+      //   checkInLatitude: attendance.checkInLatitude, // Ensure check-in latitude is preserved
+      //   checkInLongitude: attendance.checkInLongitude, // Ensure check-in longitude is preserved
+      //   checkOutLatitude: attendance.checkOutLatitude, // Save separate check-out latitude
+      //   checkOutLongitude: attendance.checkOutLongitude, // Save separate check-out longitude
+      //   totalHours: attendance.totalHours,
+      // },
     });
   } catch (error) {
-    console.error("❌ Check-Out Error:", error);
+    console.error("Check-Out Error:", error);
     res.status(500).json({
       message: "An error occurred during check-out.",
       success: false,
-      error: error.message,
     });
   }
 };

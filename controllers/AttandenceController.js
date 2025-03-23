@@ -478,15 +478,102 @@ const GetCurrentLocation = async (req, res) => {
 //   }
 // };
 
+// const checkOutController = async (req, res) => {
+//   try {
+//     console.log("Received Query Params:", req.query); // Debugging log
+
+//     let { uniqueKey, latitude, longitude } = req.query;
+
+//     if (!uniqueKey) {
+//       return res.status(400).json({
+//         message: "Unique Key is required.",
+//         success: false,
+//       });
+//     }
+
+//     latitude = parseFloat(latitude);
+//     longitude = parseFloat(longitude);
+
+//     if (isNaN(latitude) || isNaN(longitude)) {
+//       return res.status(400).json({
+//         message: "Latitude and Longitude must be valid numbers.",
+//         success: false,
+//       });
+//     }
+
+//     if (
+//       latitude < -90 ||
+//       latitude > 90 ||
+//       longitude < -180 ||
+//       longitude > 180
+//     ) {
+//       return res.status(400).json({
+//         message:
+//           "Latitude must be between -90 and 90, and Longitude between -180 and 180.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Checking Attendance Record...");
+//     const todayDate = new Date().toISOString().split("T")[0];
+
+//     const attendance = await Attendance.findOne({
+//       uniqueKey,
+//       date: todayDate,
+//     });
+
+//     if (!attendance) {
+//       return res.status(404).json({
+//         message: "No check-in record found for today.",
+//         success: false,
+//       });
+//     }
+
+//     console.log("Updating Attendance Record...");
+//     attendance.checkOut = new Date();
+//     attendance.checkOutLatitude = latitude; // Save check-out latitude
+//     attendance.checkOutLongitude = longitude; // Save check-out longitude
+//     attendance.totalHours = (
+//       (attendance.checkOut - new Date(attendance.checkIn)) /
+//       (1000 * 60 * 60)
+//     ).toFixed(2);
+//     attendance.status = "Success";
+
+//     await attendance.save();
+
+//     console.log("Check-out Successful!");
+//     res.status(200).json({
+//       message: "Check-out successful.",
+//       success: true,
+//       // data: {
+//       //   uniqueKey,
+//       //   checkIn: attendance.checkIn,
+//       //   checkOut: attendance.checkOut,
+//       //   checkInLatitude: attendance.checkInLatitude, // Ensure check-in latitude is preserved
+//       //   checkInLongitude: attendance.checkInLongitude, // Ensure check-in longitude is preserved
+//       //   checkOutLatitude: attendance.checkOutLatitude, // Save separate check-out latitude
+//       //   checkOutLongitude: attendance.checkOutLongitude, // Save separate check-out longitude
+//       //   totalHours: attendance.totalHours,
+//       // },
+//     });
+//   } catch (error) {
+//     console.error("Check-Out Error:", error);
+//     res.status(500).json({
+//       message: "An error occurred during check-out.",
+//       success: false,
+//     });
+//   }
+// };
+
 const checkOutController = async (req, res) => {
   try {
     console.log("Received Query Params:", req.query); // Debugging log
 
-    let { uniqueKey, latitude, longitude } = req.query;
+    let { checkInId, uniqueKey, latitude, longitude } = req.query;
 
-    if (!uniqueKey) {
+    if (!checkInId && !uniqueKey) {
       return res.status(400).json({
-        message: "Unique Key is required.",
+        message: "Either Check-In ID or Unique Key is required.",
         success: false,
       });
     }
@@ -515,24 +602,34 @@ const checkOutController = async (req, res) => {
     }
 
     console.log("Checking Attendance Record...");
-    const todayDate = new Date().toISOString().split("T")[0];
+    let attendance;
 
-    const attendance = await Attendance.findOne({
-      uniqueKey,
-      date: todayDate,
-    });
+    if (checkInId) {
+      attendance = await Attendance.findById(checkInId);
+    } else {
+      const todayDate = new Date().toISOString().split("T")[0];
+      attendance = await Attendance.findOne({ uniqueKey, date: todayDate });
+    }
 
     if (!attendance) {
       return res.status(404).json({
-        message: "No check-in record found for today.",
+        message: "No matching check-in record found.",
         success: false,
+      });
+    }
+
+    if (attendance.checkOut) {
+      return res.status(400).json({
+        message: "Employee has already checked out.",
+        success: false,
+        checkOutTime: attendance.checkOut,
       });
     }
 
     console.log("Updating Attendance Record...");
     attendance.checkOut = new Date();
-    attendance.checkOutLatitude = latitude; // Save check-out latitude
-    attendance.checkOutLongitude = longitude; // Save check-out longitude
+    attendance.checkOutLatitude = latitude;
+    attendance.checkOutLongitude = longitude;
     attendance.totalHours = (
       (attendance.checkOut - new Date(attendance.checkIn)) /
       (1000 * 60 * 60)
@@ -541,26 +638,26 @@ const checkOutController = async (req, res) => {
 
     await attendance.save();
 
-    console.log("Check-out Successful!");
+    console.log("✅ Check-out Successful!");
     res.status(200).json({
       message: "Check-out successful.",
       success: true,
-      // data: {
-      //   uniqueKey,
-      //   checkIn: attendance.checkIn,
-      //   checkOut: attendance.checkOut,
-      //   checkInLatitude: attendance.checkInLatitude, // Ensure check-in latitude is preserved
-      //   checkInLongitude: attendance.checkInLongitude, // Ensure check-in longitude is preserved
-      //   checkOutLatitude: attendance.checkOutLatitude, // Save separate check-out latitude
-      //   checkOutLongitude: attendance.checkOutLongitude, // Save separate check-out longitude
-      //   totalHours: attendance.totalHours,
-      // },
+      checkInId: attendance._id,
+      uniqueKey: attendance.uniqueKey,
+      checkIn: attendance.checkIn,
+      checkOut: attendance.checkOut,
+      checkInLatitude: attendance.checkInLatitude,
+      checkInLongitude: attendance.checkInLongitude,
+      checkOutLatitude: attendance.checkOutLatitude,
+      checkOutLongitude: attendance.checkOutLongitude,
+      totalHours: attendance.totalHours,
     });
   } catch (error) {
-    console.error("Check-Out Error:", error);
+    console.error("❌ Check-Out Error:", error);
     res.status(500).json({
       message: "An error occurred during check-out.",
       success: false,
+      error: error.message,
     });
   }
 };

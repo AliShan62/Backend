@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const {
   checkInController,
+  getCheckInDetails,
   checkOutController,
   getAttendanceRecordsController,
   GetCurrentLocation,
@@ -11,6 +12,9 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 
 // Check-in route
 router.post("/checkin", authMiddleware, checkInController);
+
+// Check-in route
+router.post("/getcheckIndetails", authMiddleware, getCheckInDetails);
 
 // Check-in route
 router.post("/currentlocation", authMiddleware, GetCurrentLocation);

@@ -23,7 +23,7 @@ router.post("/currentlocation", authMiddleware, GetCurrentLocation);
 router.post("/checkout", authMiddleware, checkOutController);
 
 // getCheckOutDetails route
-router.post("/getcheckoutdetails", authMiddleware, getCheckOutDetails);
+router.get("/getcheckoutdetails", authMiddleware, getCheckOutDetails);
 
 // Get attendance records by employee ID
 router.get("/:employeeId", authMiddleware, getAttendanceRecordsController);

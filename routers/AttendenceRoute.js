@@ -14,7 +14,7 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 router.post("/checkin", authMiddleware, checkInController);
 
 // Check-in route
-router.post("/getcheckIndetails", authMiddleware, getCheckInDetails);
+router.get("/getcheckIndetails", authMiddleware, getCheckInDetails);
 
 // Check-in route
 router.post("/currentlocation", authMiddleware, GetCurrentLocation);

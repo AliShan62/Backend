@@ -847,6 +847,55 @@ const checkOutController = async (req, res) => {
   }
 };
 
+const getCheckOutDetails = async (req, res) => {
+  try {
+    console.log("Received Query Params:", req.query); // Debugging log
+
+    let { checkInId, uniqueKey } = req.query;
+
+    if (!checkInId && !uniqueKey) {
+      return res.status(400).json({
+        message: "Either Check-In ID or Unique Key is required.",
+        success: false,
+      });
+    }
+
+    console.log("Fetching Check-Out Details...");
+    let attendance;
+
+    if (checkInId) {
+      attendance = await Attendance.findById(checkInId);
+    } else {
+      attendance = await Attendance.findOne({ uniqueKey })
+        .sort({ checkOut: -1 }) // Get the most recent check-out
+        .select(
+          "uniqueKey firstName lastName branch checkIn checkOut checkOutLatitude checkOutLongitude totalHours status date"
+        );
+    }
+
+    if (!attendance || !attendance.checkOut) {
+      return res.status(404).json({
+        message: "No check-out record found for this employee.",
+        success: false,
+      });
+    }
+
+    console.log("Check-Out Details Retrieved Successfully!");
+    res.status(200).json({
+      message: "Check-out details fetched successfully.",
+      success: true,
+      data: attendance,
+    });
+  } catch (error) {
+    console.error("Error Fetching Check-Out Details:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching check-out details.",
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 const getAttendanceRecordsController = async (req, res) => {
   try {
     const { employeeId } = req.params;
@@ -885,5 +934,6 @@ module.exports = {
   getCheckInDetails,
   GetCurrentLocation,
   checkOutController,
+  getCheckOutDetails,
   getAttendanceRecordsController,
 };

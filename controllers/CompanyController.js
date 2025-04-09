@@ -484,7 +484,7 @@ const forgotPassword = async (req, res) => {
     // Generate reset code and expiration time
     const resetCode = Math.floor(Math.random() * 1000000); // Generate a 6-digit code
     user.resetCode = resetCode;
-    user.resetCodeExpiry = Date.now() + 15 * 60 * 1000; // Set expiry time (15 minutes from now)
+    user.resetCodeExpiry = Date.now() + 5 * 60 * 1000; // Set expiry time (15 minutes from now)
     await user.save();
 
     // Generate the reset link (adjust as needed)
@@ -502,7 +502,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Send success response
-    res.status(200).send("Password reset email sent successfully");
+    res.status(200).send("Password reset email sent successfully", user);
   } catch (error) {
     console.error("Error in forgotPassword controller:", error); // Log detailed error
     res.status(500).send("Server error");

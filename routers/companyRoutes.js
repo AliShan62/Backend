@@ -23,7 +23,7 @@ router.post("/register", signup);
 router.post("/login", login);
 
 // Get company profile details for editing
-router.get("/profile/:id", getCompanyProfile); // Get profile by company ID
+router.get("/profile/:id", compMiddleware, getCompanyProfile); // Get profile by company ID
 
 // Update company profile details
 router.put("/profile/:id", updateCompanyProfile); // Update profile by company ID

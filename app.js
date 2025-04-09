@@ -75,15 +75,17 @@ const MiddlewareForIfElse = require("./middleware/error");
 // CORS Configuration (Allow frontend origins)
 app.use(
   cors({
-    origin: "*",
-    // origin: [
-    //   "http://65.0.199.177:9000",
-    //   "http://localhost:3000",
-    //   "http://10.96.42.40:3000",
-    //   "http://localhost:5173",
-    //   "http://192.168.138.148:5173",
-    //   "http://192.168.138.158:5173",
-    // ], // Add frontend origins
+    // origin: "*",
+
+    origin: [
+      "http://65.0.199.177:9000",
+      "http://localhost:3000",
+      "http://10.96.42.40:3000",
+      "http://localhost:5173",
+      "http://192.168.138.148:5173",
+      "http://192.168.138.158:5173",
+      "http://192.168.138.158:5173",
+    ], // Add frontend origins
     credentials: true, // Enable cookies
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers

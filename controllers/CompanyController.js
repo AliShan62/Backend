@@ -1,5 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+
 const CompanyProfile = require("../models/CompanyProfile"); //import the CompanyProfile model
 const CompanyLoginHistory = require("../models/CompanyLoginHistory"); // Import the model // Correctly
 const validator = require("validator");

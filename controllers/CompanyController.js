@@ -441,15 +441,6 @@ const changePassword = async (req, res) => {
   }
 };
 
-// Create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  service: "gmail", // You can change this to your SMTP provider
-  auth: {
-    user: process.env.EMAIL_USER, // Your email address
-    pass: process.env.EMAIL_PASS, // Your email password
-  },
-});
-
 // Function to send email
 const sendEmail = async (to, subject, text) => {
   try {
@@ -466,6 +457,7 @@ const sendEmail = async (to, subject, text) => {
   }
 };
 
+// Forgot Password Controller
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -476,25 +468,25 @@ const forgotPassword = async (req, res) => {
     }
 
     // Check if the email exists in the database
-    const user = await CompanyProfile.findOne({ email });
-    if (!user) {
+    const company = await CompanyProfile.findOne({ email });
+    if (!company) {
       return res.status(400).send("Email not found");
     }
 
     // Generate reset code and expiration time
     const resetCode = Math.floor(Math.random() * 1000000); // Generate a 6-digit code
-    user.resetCode = resetCode;
-    user.resetCodeExpiry = Date.now() + 5 * 60 * 1000; // Set expiry time (15 minutes from now)
-    await user.save();
+    company.resetCode = resetCode;
+    company.resetCodeExpiry = Date.now() + 5 * 60 * 1000; // Set expiry time (5 minutes from now)
+    await company.save();
 
-    // Generate the reset link (adjust as needed)
-    const resetLink = `http://localhost:5173/reset-password/${resetCode}`;
+    // Generate the reset link
+    const resetLink = `http://localhost:5173/forgot-password/${resetCode}`;
 
     // Send email with the reset code
     const emailSent = await sendEmail(
       email,
       "Password Reset Request",
-      `You have requested a password reset. Please use the following code to reset your password: ${resetCode}. The code will expire in 15 minutes.`
+      `You have requested a password reset. Please use the following code to reset your password: ${resetCode}. The code will expire in 5 minutes.`
     );
 
     if (!emailSent) {
@@ -509,37 +501,60 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Controller for Reset Password
+// Reset Password Controller (with newPassword and confirmPassword)
 const resetPassword = async (req, res) => {
-  const { email, resetCode, newPassword } = req.body;
+  const { email, newPassword, confirmPassword } = req.body;
 
   try {
-    // Find the user by email
-    const user = await CompanyProfile.findOne({ email });
-    if (!user) {
+    // Check if both newPassword and confirmPassword are provided
+    if (!newPassword || !confirmPassword) {
+      return res
+        .status(400)
+        .send("Both new password and confirmation password are required.");
+    }
+
+    // Check if the newPassword and confirmPassword match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send("Passwords do not match.");
+    }
+
+    // Optional: Validate password strength (e.g., minimum length, etc.)
+    const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // Example: Minimum 8 characters, at least 1 letter and 1 number
+    if (!passwordStrengthRegex.test(newPassword)) {
+      return res
+        .status(400)
+        .send(
+          "Password must be at least 8 characters long and contain at least one letter and one number."
+        );
+    }
+
+    // Find the company by email
+    const company = await CompanyProfile.findOne({ email });
+    if (!company) {
       return res.status(400).send("Email not found");
     }
 
     // Check if the reset code matches and is not expired
-    if (user.resetPasswordCode !== resetCode) {
+    if (company.resetCode !== resetCode) {
       return res.status(400).send("Invalid or expired reset code");
     }
 
-    if (user.resetPasswordExpires < Date.now()) {
+    if (company.resetCodeExpiry < Date.now()) {
       return res.status(400).send("Reset code has expired");
     }
 
-    // Hash the new password and update the user's password
+    // Hash the new password and update the company's password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
+    company.password = hashedPassword;
 
     // Clear the reset password fields
-    user.resetPasswordCode = undefined;
-    user.resetPasswordExpires = undefined;
+    company.resetCode = undefined;
+    company.resetCodeExpiry = undefined;
 
-    await user.save();
-    res.status(200).send("Password has been reset");
+    await company.save();
+    res.status(200).send("Password has been reset successfully");
   } catch (error) {
+    console.error("Error in resetPassword controller:", error); // Log detailed error
     res.status(500).send("Server error");
   }
 };

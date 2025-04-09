@@ -502,7 +502,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Send success response
-    res.status(200).send("Password reset email sent successfully", user);
+    res.status(200).send("Password reset email sent successfully");
   } catch (error) {
     console.error("Error in forgotPassword controller:", error); // Log detailed error
     res.status(500).send("Server error");

@@ -441,6 +441,15 @@ const changePassword = async (req, res) => {
   }
 };
 
+// Create reusable transporter object using the default SMTP transport
+const transporter = nodemailer.createTransport({
+  service: "gmail", // You can change this to your SMTP provider
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password
+  },
+});
+
 // Function to send email
 const sendEmail = async (to, subject, text) => {
   try {
@@ -480,7 +489,7 @@ const forgotPassword = async (req, res) => {
     await company.save();
 
     // Generate the reset link
-    const resetLink = `http://localhost:5173/forgot-password/${resetCode}`;
+    const resetLink = `http://localhost:5173/reset-password/${resetCode}`;
 
     // Send email with the reset code
     const emailSent = await sendEmail(
@@ -558,7 +567,6 @@ const resetPassword = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
 module.exports = {
   signup,
   login,

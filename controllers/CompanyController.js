@@ -179,41 +179,16 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { companyId: company._id }, // Payload containing companyId
       process.env.JWT_SECRET, // Secret key (store this in .env file)
-      { expiresIn: "1h" } // More secure expiration time
+      { expiresIn: "1h" } // Expiration time for the token
     );
 
     // Save the token as an HTTP-only cookie
     res.cookie("token", token, {
       httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
-      secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
+      secure: process.env.NODE_ENV === "production", // Secure in production (HTTPS required)
       maxAge: 3600000, // Cookie expiration (1 hour)
       sameSite: "Strict", // Prevents CSRF attacks
     });
-
-    // Prepare the login history object
-    const loginHistory = new CompanyLoginHistory({
-      companyId: company._id,
-      companyDetails: {
-        businessName: company.businessName,
-        email: company.email,
-        phone: company.phone,
-        fax: company.fax,
-        username: company.username,
-        companyImage: company.companyImage,
-        qrCodeImage: company.qrCodeImage,
-        checkoutRange: company.checkoutRange,
-        image: company.image,
-        resetTime: company.resetTime,
-        timeFormat: company.timeFormat,
-        verifyCheckout: company.verifyCheckout,
-        salaryEnable: company.salaryEnable,
-        location: company.location,
-      },
-      loginTime: new Date(),
-    });
-
-    // Save the login history into the database
-    await loginHistory.save();
 
     // Send the company info in the response
     res.status(200).json({

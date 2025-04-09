@@ -1,8 +1,8 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const CompanyProfile = require('../models/CompanyProfile'); //import the CompanyProfile model
-const CompanyLoginHistory = require('../models/CompanyLoginHistory'); // Import the model // Correctly 
-const validator = require('validator');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const CompanyProfile = require("../models/CompanyProfile"); //import the CompanyProfile model
+const CompanyLoginHistory = require("../models/CompanyLoginHistory"); // Import the model // Correctly
+const validator = require("validator");
 
 // Sign Up Controller
 const signup = async (req, res) => {
@@ -28,12 +28,15 @@ const signup = async (req, res) => {
 
     // Validate required fields
     if (!businessName || !email || !phone || !username || !password) {
-      return res.status(400).json({ error: 'Business Name, Email, Phone, Username, and Password are required.' });
+      return res.status(400).json({
+        error:
+          "Business Name, Email, Phone, Username, and Password are required.",
+      });
     }
 
     // Validate email format
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format.' });
+      return res.status(400).json({ error: "Invalid email format." });
     }
 
     // Hash the password before saving to the database
@@ -42,12 +45,12 @@ const signup = async (req, res) => {
     // Check if email or username already exists
     const existingEmail = await CompanyProfile.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ error: 'Email already in use.' });
+      return res.status(400).json({ error: "Email already in use." });
     }
 
     const existingUsername = await CompanyProfile.findOne({ username });
     if (existingUsername) {
-      return res.status(400).json({ error: 'Username already taken.' });
+      return res.status(400).json({ error: "Username already taken." });
     }
 
     // Create new company profile
@@ -55,15 +58,15 @@ const signup = async (req, res) => {
       businessName,
       email,
       phone,
-      fax: fax || '',
+      fax: fax || "",
       username,
       password: hashedPassword,
-      companyImage: companyImage || '',
-      qrCodeImage: qrCodeImage || '',
-      checkoutRange: checkoutRange || '',
-      image: image || '',
-      resetTime: resetTime || '',
-      timeFormat: timeFormat || '24',
+      companyImage: companyImage || "",
+      qrCodeImage: qrCodeImage || "",
+      checkoutRange: checkoutRange || "",
+      image: image || "",
+      resetTime: resetTime || "",
+      timeFormat: timeFormat || "24",
       verifyCheckout: verifyCheckout || false,
       salaryEnable: salaryEnable || false,
       location: {
@@ -76,15 +79,16 @@ const signup = async (req, res) => {
     await newCompanyProfile.save();
 
     return res.status(201).json({
-      message: 'Company profile created successfully!',
+      message: "Company profile created successfully!",
       companyProfile: newCompanyProfile,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while creating the company profile.' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while creating the company profile." });
   }
 };
-
 
 // Login Controller
 // const login = async (req, res) => {
@@ -149,7 +153,9 @@ const login = async (req, res) => {
 
     // Check if username and password are provided
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
 
     // Find the company by username
@@ -157,21 +163,21 @@ const login = async (req, res) => {
 
     // If no company is found, return an error
     if (!company) {
-      return res.status(400).json({ error: 'Invalid username or password' });
+      return res.status(400).json({ error: "Invalid username or password" });
     }
 
     // Use bcrypt.compare() to compare the plain-text password with the hashed password in DB
     const isMatch = await bcrypt.compare(password, company.password);
 
     if (!isMatch) {
-      return res.status(400).json({ error: 'Invalid username or password' });
+      return res.status(400).json({ error: "Invalid username or password" });
     }
 
     // Generate a JWT token for the company
     const token = jwt.sign(
       { companyId: company._id }, // Payload containing companyId
       process.env.JWT_SECRET, // Secret key (store this in .env file)
-      { expiresIn: '10s' } // Expiration time for the token
+      { expiresIn: "10s" } // Expiration time for the token
     );
 
     // Prepare the login history object
@@ -201,7 +207,7 @@ const login = async (req, res) => {
 
     // Send the token and company info in the response
     res.status(200).json({
-      message: 'Login successful',
+      message: "Login successful",
       token, // Send the generated token
       success: true,
       company: {
@@ -219,16 +225,13 @@ const login = async (req, res) => {
         verifyCheckout: company.verifyCheckout,
         salaryEnable: company.salaryEnable,
         location: company.location,
-      }
+      },
     });
-
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
 
 // Logout Company
 const logoutCompany = (req, res) => {
@@ -236,13 +239,12 @@ const logoutCompany = (req, res) => {
     // You can destroy the token by setting it to null or removing it from cookies or localStorage
     res.clearCookie("token"); // This clears the token stored in the cookie (if you're using cookies for session)
 
-    return res.status(200).json({ message: 'Successfully logged out' });
+    return res.status(200).json({ message: "Successfully logged out" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred during logout' });
+    return res.status(500).json({ error: "An error occurred during logout" });
   }
 };
-
 
 // Get Company Profile (for editing)
 const getCompanyProfile = async (req, res) => {
@@ -251,20 +253,21 @@ const getCompanyProfile = async (req, res) => {
     const companyProfile = await CompanyProfile.findById(companyId);
 
     if (!companyProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      return res.status(404).json({ error: "Company profile not found" });
     }
 
     // Return the company profile details for editing
     return res.status(200).json({
-      message: 'Company profile fetched successfully',
+      message: "Company profile fetched successfully",
       companyProfile,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while fetching the company profile' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while fetching the company profile" });
   }
 };
-
 
 // Update Company Profile
 const updateCompanyProfile = async (req, res) => {
@@ -291,29 +294,31 @@ const updateCompanyProfile = async (req, res) => {
 
     // Validate required fields
     if (!businessName || !email || !phone || !username) {
-      return res.status(400).json({ error: 'Business Name, Email, Phone, and Username are required.' });
+      return res.status(400).json({
+        error: "Business Name, Email, Phone, and Username are required.",
+      });
     }
 
     // Validate email format
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ error: 'Invalid email format.' });
+      return res.status(400).json({ error: "Invalid email format." });
     }
 
     // Check if email or username already exists
     const existingEmail = await CompanyProfile.findOne({ email });
     if (existingEmail && existingEmail._id.toString() !== companyId) {
-      return res.status(400).json({ error: 'Email already in use.' });
+      return res.status(400).json({ error: "Email already in use." });
     }
 
     const existingUsername = await CompanyProfile.findOne({ username });
     if (existingUsername && existingUsername._id.toString() !== companyId) {
-      return res.status(400).json({ error: 'Username already taken.' });
+      return res.status(400).json({ error: "Username already taken." });
     }
 
     // Find the company profile
     const companyProfile = await CompanyProfile.findById(companyId);
     if (!companyProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      return res.status(404).json({ error: "Company profile not found" });
     }
 
     // If a new password is provided, hash it
@@ -329,15 +334,15 @@ const updateCompanyProfile = async (req, res) => {
         businessName,
         email,
         phone,
-        fax: fax || '',
+        fax: fax || "",
         username,
         password: hashedPassword, // Update with the hashed password
-        companyImage: companyImage || '',
-        qrCodeImage: qrCodeImage || '',
-        checkoutRange: checkoutRange || '',
-        image: image || '',
-        resetTime: resetTime || '',
-        timeFormat: timeFormat || '24',
+        companyImage: companyImage || "",
+        qrCodeImage: qrCodeImage || "",
+        checkoutRange: checkoutRange || "",
+        image: image || "",
+        resetTime: resetTime || "",
+        timeFormat: timeFormat || "24",
         verifyCheckout: verifyCheckout || false,
         salaryEnable: salaryEnable || false,
         location: {
@@ -349,17 +354,16 @@ const updateCompanyProfile = async (req, res) => {
     );
 
     return res.status(200).json({
-      message: 'Company profile updated successfully!',
+      message: "Company profile updated successfully!",
       companyProfile: updatedCompanyProfile,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while updating the company profile' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while updating the company profile" });
   }
 };
-
-
-
 
 // Delete Company Profile
 const deleteCompanyProfile = async (req, res) => {
@@ -370,20 +374,20 @@ const deleteCompanyProfile = async (req, res) => {
     const deletedProfile = await CompanyProfile.findByIdAndDelete(companyId);
 
     if (!deletedProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      return res.status(404).json({ error: "Company profile not found" });
     }
 
     return res.status(200).json({
-      message: 'Company profile deleted successfully',
+      message: "Company profile deleted successfully",
       companyProfile: deletedProfile,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while deleting the company profile' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while deleting the company profile" });
   }
 };
-
-
 
 //changePassword
 const changePassword = async (req, res) => {
@@ -393,24 +397,28 @@ const changePassword = async (req, res) => {
 
     // Validate required fields
     if (!oldPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({ error: 'Old password, new password, and confirm password are required.' });
+      return res.status(400).json({
+        error: "Old password, new password, and confirm password are required.",
+      });
     }
 
     // Check if new password and confirm password match
     if (newPassword !== confirmPassword) {
-      return res.status(400).json({ error: 'New password and confirm password do not match.' });
+      return res
+        .status(400)
+        .json({ error: "New password and confirm password do not match." });
     }
 
     // Find the company profile by ID
     const company = await CompanyProfile.findById(companyId);
     if (!company) {
-      return res.status(404).json({ error: 'Company profile not found.' });
+      return res.status(404).json({ error: "Company profile not found." });
     }
 
     // Check if the old password is correct
     const isMatch = await bcrypt.compare(oldPassword, company.password);
     if (!isMatch) {
-      return res.status(400).json({ error: 'Old password is incorrect.' });
+      return res.status(400).json({ error: "Old password is incorrect." });
     }
 
     // Hash the new password
@@ -421,19 +429,108 @@ const changePassword = async (req, res) => {
     await company.save();
 
     return res.status(200).json({
-      message: 'Password changed successfully!',
+      message: "Password changed successfully!",
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while changing the password.' });
+    return res
+      .status(500)
+      .json({ error: "An error occurred while changing the password." });
   }
 };
 
+// Helper function to send email
+const sendEmail = async (email, subject, text) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER, // Add your email credentials in environment variables
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: subject,
+    text: text,
+  };
 
+  await transporter.sendMail(mailOptions);
+};
 
-module.exports = { signup, login, getCompanyProfile, updateCompanyProfile, deleteCompanyProfile, logoutCompany,changePassword };
+// Controller for Forgot Password
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
 
+  try {
+    // Check if the email exists
+    const user = await CompanyProfile.findOne({ email });
+    if (!user) {
+      return res.status(400).send("Email not found");
+    }
 
+    // Generate reset code and expiration time
+    const resetCode = user.generateResetCode();
+    await user.save();
 
+    // Send email with reset code
+    const resetLink = `http://yourdomain.com/reset-password/${resetCode}`;
+    await sendEmail(
+      email,
+      "Password Reset Request",
+      `You have requested a password reset. Please use the following code to reset your password: ${resetCode}. The code will expire in 15 minutes.`
+    );
+
+    res.status(200).send("Password reset email sent");
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+};
+
+// Controller for Reset Password
+const resetPassword = async (req, res) => {
+  const { email, resetCode, newPassword } = req.body;
+
+  try {
+    // Find the user by email
+    const user = await CompanyProfile.findOne({ email });
+    if (!user) {
+      return res.status(400).send("Email not found");
+    }
+
+    // Check if the reset code matches and is not expired
+    if (user.resetPasswordCode !== resetCode) {
+      return res.status(400).send("Invalid or expired reset code");
+    }
+
+    if (user.resetPasswordExpires < Date.now()) {
+      return res.status(400).send("Reset code has expired");
+    }
+
+    // Hash the new password and update the user's password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    // Clear the reset password fields
+    user.resetPasswordCode = undefined;
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
+    res.status(200).send("Password has been reset");
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+};
+
+module.exports = {
+  signup,
+  login,
+  getCompanyProfile,
+  updateCompanyProfile,
+  deleteCompanyProfile,
+  logoutCompany,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+};

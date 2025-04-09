@@ -466,7 +466,7 @@ const sendEmail = async (to, subject, text) => {
   }
 };
 
-// Forgot Password Controller
+// Forgot password controller for Company Profile
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -476,26 +476,20 @@ const forgotPassword = async (req, res) => {
       return res.status(400).send("Invalid email format");
     }
 
-    // Check if the email exists in the database
+    // Check if the company email exists in the database
     const company = await CompanyProfile.findOne({ email });
     if (!company) {
       return res.status(400).send("Email not found");
     }
 
-    // Generate reset code and expiration time
-    const resetCode = Math.floor(Math.random() * 1000000); // Generate a 6-digit code
-    company.resetCode = resetCode;
-    company.resetCodeExpiry = Date.now() + 5 * 60 * 1000; // Set expiry time (5 minutes from now)
-    await company.save();
+    // Generate the reset link (no reset code or expiry time)
+    const resetLink = `http://localhost:5173/reset-password/${company._id}`; // Using company ID
 
-    // Generate the reset link
-    const resetLink = `http://localhost:5173/reset-password/${resetCode}`;
-
-    // Send email with the reset code
+    // Send email with the reset link
     const emailSent = await sendEmail(
       email,
       "Password Reset Request",
-      `You have requested a password reset. Please use the following code to reset your password: ${resetCode}. The code will expire in 5 minutes.`
+      `You have requested a password reset for your company account. Please click the following link to reset your password: ${resetLink}. If you did not request this, please ignore this email.`
     );
 
     if (!emailSent) {
@@ -510,9 +504,9 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// Reset Password Controller (with newPassword and confirmPassword)
+// Reset password controller for Company Profile with Confirm Password
 const resetPassword = async (req, res) => {
-  const { email, newPassword, confirmPassword } = req.body;
+  const { newPassword, confirmPassword } = req.body;
 
   try {
     // Check if both newPassword and confirmPassword are provided
@@ -543,22 +537,9 @@ const resetPassword = async (req, res) => {
       return res.status(400).send("Email not found");
     }
 
-    // Check if the reset code matches and is not expired
-    if (company.resetCode !== resetCode) {
-      return res.status(400).send("Invalid or expired reset code");
-    }
-
-    if (company.resetCodeExpiry < Date.now()) {
-      return res.status(400).send("Reset code has expired");
-    }
-
     // Hash the new password and update the company's password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     company.password = hashedPassword;
-
-    // Clear the reset password fields
-    company.resetCode = undefined;
-    company.resetCodeExpiry = undefined;
 
     await company.save();
     res.status(200).send("Password has been reset successfully");
@@ -567,6 +548,7 @@ const resetPassword = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+
 module.exports = {
   signup,
   login,

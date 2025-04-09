@@ -441,24 +441,29 @@ const changePassword = async (req, res) => {
   }
 };
 
-// Helper function to send email
-const sendEmail = async (email, subject, text) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER, // Add your email credentials in environment variables
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+// Create reusable transporter object using the default SMTP transport
+const transporter = nodemailer.createTransport({
+  service: "gmail", // You can change this to your SMTP provider
+  auth: {
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS, // Your email password
+  },
+});
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: subject,
-    text: text,
-  };
-
-  await transporter.sendMail(mailOptions);
+// Function to send email
+const sendEmail = async (to, subject, text) => {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER, // Your email address
+      to: to,
+      subject: subject,
+      text: text,
+    });
+    return info.accepted.length > 0; // If the email is sent successfully, return true
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return false; // Return false if email sending failed
+  }
 };
 
 const forgotPassword = async (req, res) => {

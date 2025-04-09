@@ -475,7 +475,7 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send email with reset code
-    const resetLink = `http://yourdomain.com/reset-password/${resetCode}`;
+    const resetLink = `http://localhost:5173/reset-password/${resetCode}`;
     await sendEmail(
       email,
       "Password Reset Request",

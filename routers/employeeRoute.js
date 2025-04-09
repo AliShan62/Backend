@@ -10,6 +10,7 @@ const {
   logoutController,
 } = require("../controllers/EmployeesController");
 const { authMiddleware } = require("../middleware/authMiddleware");
+
 // Ensure correct import
 
 // Define the route for employee registration

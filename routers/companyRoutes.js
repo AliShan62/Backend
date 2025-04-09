@@ -12,6 +12,7 @@ const {
   resetPassword,
 } = require("../controllers/CompanyController");
 
+const { compMiddleware } = require("../middleware/compMiddleware");
 // Sign up and login routes
 
 const router = express.Router();

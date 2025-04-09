@@ -506,7 +506,7 @@ const forgotPassword = async (req, res) => {
 
 // Reset password controller for Company Profile with Confirm Password
 const resetPassword = async (req, res) => {
-  const { newPassword, confirmPassword } = req.body;
+  const { email, newPassword, confirmPassword } = req.body;
 
   try {
     // Check if both newPassword and confirmPassword are provided

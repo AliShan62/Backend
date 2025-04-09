@@ -179,8 +179,16 @@ const login = async (req, res) => {
     const token = jwt.sign(
       { companyId: company._id }, // Payload containing companyId
       process.env.JWT_SECRET, // Secret key (store this in .env file)
-      { expiresIn: "10s" } // Expiration time for the token
+      { expiresIn: "1h" } // More secure expiration time
     );
+
+    // Save the token as an HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
+      secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
+      maxAge: 3600000, // Cookie expiration (1 hour)
+      sameSite: "Strict", // Prevents CSRF attacks
+    });
 
     // Prepare the login history object
     const loginHistory = new CompanyLoginHistory({
@@ -207,10 +215,9 @@ const login = async (req, res) => {
     // Save the login history into the database
     await loginHistory.save();
 
-    // Send the token and company info in the response
+    // Send the company info in the response
     res.status(200).json({
       message: "Login successful",
-      token, // Send the generated token
       success: true,
       company: {
         businessName: company.businessName,
@@ -230,7 +237,7 @@ const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error); // More detailed error logging
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

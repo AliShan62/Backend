@@ -459,31 +459,45 @@ const sendEmail = async (email, subject, text) => {
   await transporter.sendMail(mailOptions);
 };
 
-// Controller for Forgot Password
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Check if the email exists
+    // Validate email format
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).send("Invalid email format");
+    }
+
+    // Check if the email exists in the database
     const user = await CompanyProfile.findOne({ email });
     if (!user) {
       return res.status(400).send("Email not found");
     }
 
     // Generate reset code and expiration time
-    const resetCode = user.generateResetCode();
+    const resetCode = Math.floor(Math.random() * 1000000); // Generate a 6-digit code
+    user.resetCode = resetCode;
+    user.resetCodeExpiry = Date.now() + 15 * 60 * 1000; // Set expiry time (15 minutes from now)
     await user.save();
 
-    // Send email with reset code
+    // Generate the reset link (adjust as needed)
     const resetLink = `http://localhost:5173/reset-password/${resetCode}`;
-    await sendEmail(
+
+    // Send email with the reset code
+    const emailSent = await sendEmail(
       email,
       "Password Reset Request",
       `You have requested a password reset. Please use the following code to reset your password: ${resetCode}. The code will expire in 15 minutes.`
     );
 
-    res.status(200).send("Password reset email sent");
+    if (!emailSent) {
+      return res.status(500).send("Failed to send email");
+    }
+
+    // Send success response
+    res.status(200).send("Password reset email sent successfully");
   } catch (error) {
+    console.error("Error in forgotPassword controller:", error); // Log detailed error
     res.status(500).send("Server error");
   }
 };

@@ -187,10 +187,11 @@ const login = async (req, res) => {
     );
 
     const options = {
+      expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // Cookie expiration (90 days)
       httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
-      secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
-      maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie expiration (1 hour)
-      sameSite: "Strict", // Prevents CSRF attacks
+      // secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
+      // maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie expiration (1 hour)
+      // sameSite: "Strict", // Prevents CSRF attacks
     };
 
     // Prepare the login history object
@@ -235,7 +236,7 @@ const login = async (req, res) => {
 const logoutCompany = (req, res) => {
   try {
     // You can destroy the token by setting it to null or removing it from cookies or localStorage
-    res.clearCookie("token"); // This clears the token stored in the cookie (if you're using cookies for session)
+    res.clearCookie("Token"); // This clears the token stored in the cookie (if you're using cookies for session)
 
     return res.status(200).json({ message: "Successfully logged out" });
   } catch (error) {

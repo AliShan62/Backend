@@ -1,37 +1,45 @@
 const Branch = require("../models/Branches"); // Import the Branch model
 
-// Create a new branch
+const Branch = require("../models/Branches");
+const CompanyProfile = require("../models/CompanyProfile"); // Assuming this is the company model
+
 exports.createBranch = async (req, res) => {
   try {
-    const { name, location, companyId, radius } = req.body;
+    const { name, location, radius } = req.body;
 
-    // Validate required fields
+    // Validate basic branch fields
     if (
       !name ||
       !location ||
       !location.city ||
       !location.latitude ||
-      !location.longitude ||
-      !companyId
+      !location.longitude
     ) {
       return res.status(400).json({
         message:
-          "All fields are required, including location (city, latitude, longitude), and companyId.",
+          "All fields are required, including location (city, latitude, longitude).",
       });
     }
 
-    // Default radius if not provided
-    const branchRadius = radius || 5000; // Set to 5000 meters if no radius is provided
+    // Fetch the latest registered company (or apply your own logic)
+    const company = await CompanyProfile.findOne().sort({ createdAt: -1 }); // Latest company
 
-    // Create a new branch object
+    if (!company) {
+      return res.status(404).json({
+        message: "No company found. Please register a company first.",
+      });
+    }
+
+    const companyId = company._id; // Use the MongoDB _id as companyId
+
+    // Create the branch
     const newBranch = new Branch({
       name,
       location,
-      companyId, // Reference to the main branch
-      radius: branchRadius, // Default radius or user-defined
+      companyId,
+      radius: radius || 5000, // Default if not provided
     });
 
-    // Save the new branch to the database
     await newBranch.save();
 
     res.status(201).json({
@@ -39,7 +47,7 @@ exports.createBranch = async (req, res) => {
       branch: newBranch,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating branch:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

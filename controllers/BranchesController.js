@@ -1,6 +1,4 @@
 const Branch = require("../models/Branches"); // Import the Branch model
-
-const Branch = require("../models/Branches");
 const CompanyProfile = require("../models/CompanyProfile"); // Assuming this is the company model
 
 exports.createBranch = async (req, res) => {

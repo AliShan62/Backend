@@ -1,5 +1,6 @@
 const Branch = require("../models/Branches"); // Import the Branch model
 const CompanyProfile = require("../models/CompanyProfile"); // Assuming this is the company model
+const mongoose = require("mongoose");
 
 exports.createBranch = async (req, res) => {
   try {

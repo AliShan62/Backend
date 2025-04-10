@@ -51,11 +51,14 @@ exports.createBranch = async (req, res) => {
 };
 
 // Get all branches for a specific company
+
 exports.getBranchesByCompany = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const companyId = req.params.companyId;
 
-    const branches = await Branch.find({ companyId });
+    const branches = await Branch.find({
+      companyId: mongoose.Types.ObjectId(companyId),
+    });
 
     if (!branches.length) {
       return res

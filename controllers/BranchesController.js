@@ -50,12 +50,14 @@ exports.createBranch = async (req, res) => {
   }
 };
 
+// Get all branches for a specific company
 exports.getBranchesByCompany = async (req, res) => {
   try {
     const { companyId } = req.params;
+
     const branches = await Branch.find({ companyId });
 
-    if (branches.length === 0) {
+    if (!branches.length) {
       return res
         .status(404)
         .json({ message: "No branches found for this company" });

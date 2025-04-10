@@ -57,15 +57,16 @@ exports.getBranchesByCompany = async (req, res) => {
   try {
     const companyId = req.params.companyId;
 
-    // Validate if companyId is a valid ObjectId
+    // Validate if companyId is a valid ObjectId using 'new' with ObjectId
     if (!mongoose.Types.ObjectId.isValid(companyId)) {
       return res.status(400).json({ message: "Invalid company ID format" });
     }
 
-    // Find branches for the company using the valid ObjectId
-    const branches = await Branch.find({
-      companyId: mongoose.Types.ObjectId(companyId),
-    });
+    // Cast companyId to ObjectId using 'new' keyword
+    const objectId = new mongoose.Types.ObjectId(companyId);
+
+    // Find branches for the company using the newly created ObjectId
+    const branches = await Branch.find({ companyId: objectId });
 
     // If no branches are found
     if (!branches || branches.length === 0) {

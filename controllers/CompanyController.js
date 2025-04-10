@@ -161,34 +161,37 @@ const login = async (req, res) => {
     }
 
     // Find the company by username
-    const company = await CompanyProfile.findOne({ username });
+    const company = await CompanyProfile.findOne({ username }).select(
+      "+password"
+    );
 
     // If no company is found, return an error
     if (!company) {
-      return res.status(400).json({ error: "Invalid username or password" });
+      return res.status(400).json({ error: "Company profile doesn't exist!" });
     }
 
     // Use bcrypt.compare() to compare the plain-text password with the hashed password in DB
     const isMatch = await bcrypt.compare(password, company.password);
 
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid username or password" });
+      return res
+        .status(400)
+        .json({ error: "Incorrect password! Try again later." });
     }
 
     // Generate a JWT token for the company
     const token = jwt.sign(
       { companyId: company._id }, // Payload containing companyId
       process.env.JWT_SECRET, // Secret key (store this in .env file)
-      { expiresIn: "1h" } // More secure expiration time
+      { expiresIn: "90d" } // More secure expiration time
     );
 
-    // Save the token as an HTTP-only cookie
-    res.cookie("token", token, {
+    const options = {
       httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
       secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
-      maxAge: 3600000, // Cookie expiration (1 hour)
+      maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie expiration (1 hour)
       sameSite: "Strict", // Prevents CSRF attacks
-    });
+    };
 
     // Prepare the login history object
     const loginHistory = new CompanyLoginHistory({
@@ -216,25 +219,11 @@ const login = async (req, res) => {
     await loginHistory.save();
 
     // Send the company info in the response
-    res.status(200).json({
-      message: "Login successful",
+    res.status(200).cookie("Token", token, options).json({
+      message: "Logged in successfully!",
       success: true,
-      company: {
-        businessName: company.businessName,
-        email: company.email,
-        phone: company.phone,
-        fax: company.fax,
-        username: company.username,
-        companyImage: company.companyImage,
-        qrCodeImage: company.qrCodeImage,
-        checkoutRange: company.checkoutRange,
-        image: company.image,
-        resetTime: company.resetTime,
-        timeFormat: company.timeFormat,
-        verifyCheckout: company.verifyCheckout,
-        salaryEnable: company.salaryEnable,
-        location: company.location,
-      },
+      token, // Send the generated token
+      company,
     });
   } catch (error) {
     console.error("Login error:", error); // More detailed error logging

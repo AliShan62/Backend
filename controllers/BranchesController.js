@@ -50,10 +50,22 @@ exports.createBranch = async (req, res) => {
   }
 };
 
-// Get all branches
+// Get all branches of a specific company
 exports.getBranches = async (req, res) => {
   try {
-    const branches = await Branch.find(); // Get all branches from the database
+    const { companyId } = req.params; // Get companyId from request params
+
+    // Find all branches related to the provided companyId
+    const branches = await Branch.find({ companyId });
+
+    // If no branches are found, return a 404 response
+    if (branches.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No branches found for this company." });
+    }
+
+    // Return the branches related to the company
     res.status(200).json(branches);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });

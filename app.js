@@ -82,6 +82,7 @@ app.use(
       "http://localhost:3000",
       "http://10.96.42.40:3000",
       "http://localhost:5173",
+      "https://presencetrack.netlify.app",
       "http://192.168.138.148:5173",
       "http://192.168.138.158:5173",
       "http://192.168.138.158:5173",

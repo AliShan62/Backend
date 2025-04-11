@@ -196,7 +196,7 @@ const login = async (req, res) => {
     );
 
     const options = {
-      expires: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // Cookie expiration (90 days)
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Cookie expiration (90 days)
       httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
       // secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
       // maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie expiration (1 hour)

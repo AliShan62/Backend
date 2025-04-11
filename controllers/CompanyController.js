@@ -41,6 +41,15 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: "Invalid email format." });
     }
 
+    const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+    if (!passwordStrengthRegex.test(password)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters long and contain at least one letter, one number and one special character.",
+      });
+    }
+
     // Hash the password before saving to the database
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -238,7 +247,7 @@ const logoutCompany = (req, res) => {
     // You can destroy the token by setting it to null or removing it from cookies or localStorage
     res.clearCookie("Token"); // This clears the token stored in the cookie (if you're using cookies for session)
 
-    return res.status(200).json({ message: "Successfully logged out" });
+    return res.status(200).json({ message: "Logged out successfully." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "An error occurred during logout" });
@@ -320,12 +329,6 @@ const updateCompanyProfile = async (req, res) => {
       return res.status(404).json({ error: "Company profile not found" });
     }
 
-    // If a new password is provided, hash it
-    let hashedPassword = companyProfile.password; // Default to existing password
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, 12); // Hash new password
-    }
-
     // Update the company profile with the provided data
     const updatedCompanyProfile = await CompanyProfile.findByIdAndUpdate(
       companyId,
@@ -335,7 +338,7 @@ const updateCompanyProfile = async (req, res) => {
         phone,
         fax: fax || "",
         username,
-        password: hashedPassword, // Update with the hashed password
+        password,
         companyImage: companyImage || "",
         qrCodeImage: qrCodeImage || "",
         checkoutRange: checkoutRange || "",
@@ -420,6 +423,15 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ error: "Old password is incorrect." });
     }
 
+    const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+    if (!passwordStrengthRegex.test(newPassword)) {
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters long and contain at least one letter, one number and one special character.",
+      });
+    }
+
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
@@ -468,83 +480,109 @@ const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    // Validate email format
     if (!email || !validator.isEmail(email)) {
-      return res.status(400).send("Invalid email format");
+      return res.status(400).json({ error: "Invalid email format" });
     }
 
-    // Check if the company email exists in the database
     const company = await CompanyProfile.findOne({ email });
     if (!company) {
-      return res.status(400).send("Email not found");
+      return res.status(400).json({ error: "Company profile not found!" });
     }
 
-    // Generate the reset link (no reset code or expiry time)
-    const resetLink = `http://localhost:5173/reset-password/${company._id}`; // Using company ID
+    // Generate 5-digit code
+    const resetCode = Math.floor(10000 + Math.random() * 90000).toString();
+    const resetCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Send email with the reset link
+    // Save code and expiration
+    company.resetCode = resetCode;
+    company.resetCodeExpires = resetCodeExpires;
+    await company.save();
+
+    // Send email
     const emailSent = await sendEmail(
       email,
-      "Password Reset Request",
-      `You have requested a password reset for your company account. Please click the following link to reset your password: ${resetLink}. If you did not request this, please ignore this email.`
+      "Password Reset Code",
+      `Your password reset code is: ${resetCode}. It will expire in 15 minutes.`
     );
 
     if (!emailSent) {
-      return res.status(500).send("Failed to send email");
+      return res.status(500).json({ error: "Failed to send email" });
     }
 
-    // Send success response
-    res.status(200).send("Password reset email sent successfully");
+    res.status(200).json({ message: "Verification code sent to email" });
   } catch (error) {
-    console.error("Error in forgotPassword controller:", error); // Log detailed error
-    res.status(500).send("Server error");
+    console.error("Error in forgotPassword controller:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Verify reset code controller for Company Profile
+const verifyResetCode = async (req, res) => {
+  const { email, code } = req.body;
+
+  try {
+    const company = await CompanyProfile.findOne({ email });
+    if (
+      !company ||
+      company.resetCode !== code ||
+      company.resetCodeExpires < new Date()
+    ) {
+      return res.status(400).json({ error: "Invalid or expired code" });
+    }
+
+    res.status(200).json({ message: "Code verified successfully" });
+  } catch (error) {
+    console.error("Error in verifyResetCode controller:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
 // Reset password controller for Company Profile with Confirm Password
 const resetPassword = async (req, res) => {
-  const { email, newPassword, confirmPassword } = req.body;
+  const { email, code, newPassword, confirmPassword } = req.body;
 
   try {
-    // Check if both newPassword and confirmPassword are provided
     if (!newPassword || !confirmPassword) {
       return res
         .status(400)
-        .send("Both new password and confirmation password are required.");
+        .json({ error: "Both new password and confirmation password are required." });
     }
 
-    // Check if the newPassword and confirmPassword match
     if (newPassword !== confirmPassword) {
-      return res.status(400).send("Passwords do not match.");
+      return res.status(400).json({ error: "Passwords do not match." });
     }
 
-    // Optional: Validate password strength (e.g., minimum length, etc.)
-    const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/; // Example: Minimum 8 characters, at least 1 letter and 1 number
+    const passwordStrengthRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
     if (!passwordStrengthRegex.test(newPassword)) {
-      return res
-        .status(400)
-        .send(
-          "Password must be at least 8 characters long and contain at least one letter and one number."
-        );
+      return res.status(400).json({
+        error:
+          "Password must be at least 8 characters long and contain at least one letter, one number and one special character.",
+      });
     }
 
-    // Find the company by email
     const company = await CompanyProfile.findOne({ email });
-    if (!company) {
-      return res.status(400).send("Email not found");
+    if (
+      !company ||
+      company.resetCode !== code ||
+      company.resetCodeExpires < new Date()
+    ) {
+      return res.status(400).json({ error: "Invalid or expired code" });
     }
 
-    // Hash the new password and update the company's password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     company.password = hashedPassword;
+    company.resetCode = undefined;
+    company.resetCodeExpires = undefined;
 
     await company.save();
-    res.status(200).send("Password has been reset successfully");
+    res.status(200).json({ message: "Password has been reset successfully" });
   } catch (error) {
-    console.error("Error in resetPassword controller:", error); // Log detailed error
-    res.status(500).send("Server error");
+    console.error("Error in resetPassword controller:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
+
 
 module.exports = {
   signup,
@@ -555,5 +593,6 @@ module.exports = {
   logoutCompany,
   changePassword,
   forgotPassword,
+  verifyResetCode,
   resetPassword,
 };

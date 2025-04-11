@@ -37,9 +37,15 @@
  // });
  
   
+<<<<<<< HEAD
 //const server = app.listen(process.env.PORT||4001, () => {
   //  console.log(`Server Is running Successfully on Port Number:${process.env.PORT||4001}`.yellow)
 //})
+=======
+const server = app.listen(process.env.PORT , () => {
+    console.log(`Server Is running Successfully on Port Number:${process.env.PORT}`.yellow)
+})
+>>>>>>> origin/main
 
 
 // // this is errorhandler to for unhandled promise Rejection

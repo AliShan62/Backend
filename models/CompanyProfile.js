@@ -133,6 +133,8 @@ const companyProfileSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  resetCode: String,
+  resetCodeExpires: Date,
   createdAt: {
     type: Date,
     default: Date.now,

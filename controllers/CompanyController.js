@@ -200,7 +200,7 @@ const login = async (req, res) => {
       httpOnly: true, // Ensures cookie cannot be accessed via JavaScript
       // secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS required)
       // maxAge: 90 * 24 * 60 * 60 * 1000, // Cookie expiration (1 hour)
-      // sameSite: "Strict", // Prevents CSRF attacks
+      sameSite: "None", // Prevents CSRF attacks
     };
 
     // Prepare the login history object
